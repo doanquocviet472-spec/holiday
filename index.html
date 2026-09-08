@@ -4129,6 +4129,7 @@ fileName: t.attachmentFileName
     "use strict";
 
     const OFFLINE_MAP_URL = "https://huggingface.co/buckets/hacervietnam/holiday/resolve/map.mbtiles";
+    const OFFLINE_MAP_CACHE = "itinerary-offline-map-v2";
     const MAP_STATUS_ID = "offline-map-status";
     const MAP_LABEL_LAYER_ID = "offline-map-label-layer";
     const ROUTE_SOURCE_ID = "offline-itinerary-routes";
@@ -4286,8 +4287,43 @@ fileName: t.attachmentFileName
 
     async function loadMbtiles(){
       setMapStatus("Loading offline map…", false);
-      const response = await fetch(OFFLINE_MAP_URL, {cache:"no-store"});
-      if(!response.ok) throw new Error("HTTP " + response.status + " while loading " + OFFLINE_MAP_URL);
+
+      // First visit: download from Hugging Face and cache the response locally.
+      // Later visits: reuse the cached 293 MB archive instead of downloading it again.
+      let response = null;
+      try {
+        if (window.caches) {
+          const cache = await caches.open(OFFLINE_MAP_CACHE);
+          response = await cache.match(OFFLINE_MAP_URL);
+        }
+      } catch (cacheError) {
+        console.warn("[Offline Map] Cache lookup failed:", cacheError);
+      }
+
+      if (!response) {
+        response = await fetch(OFFLINE_MAP_URL, {
+          cache: "force-cache",
+          credentials: "omit"
+        });
+        if(!response.ok) throw new Error("HTTP " + response.status + " while loading " + OFFLINE_MAP_URL);
+
+        try {
+          if (window.caches) {
+            const cache = await caches.open(OFFLINE_MAP_CACHE);
+            await cache.put(OFFLINE_MAP_URL, response.clone());
+          }
+        } catch (cacheError) {
+          console.warn("[Offline Map] Cache save failed:", cacheError);
+        }
+      }
+
+      const contentLength = Number(response.headers.get("content-length") || 0);
+      if (contentLength) {
+        setMapStatus("Downloading map " + Math.round(contentLength / 1048576) + " MB…", false);
+      } else {
+        setMapStatus("Reading offline map…", false);
+      }
+
       const buffer = await response.arrayBuffer();
       if(!buffer || buffer.byteLength < 16) throw new Error("MBTiles file is empty or too small.");
       if(buffer.byteLength > 1024 * 1024 * 1024) console.warn("[Offline Map] Large MBTiles file:", buffer.byteLength);
