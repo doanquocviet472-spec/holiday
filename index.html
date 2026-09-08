@@ -453,6 +453,45 @@
     .map-focus-mode .map-pane { min-height: calc(100vh - 135px); }
     .map-focus-mode .map-stage,
     .map-focus-mode #offline-map { min-height: calc(100vh - 210px); height: calc(100vh - 210px); }
+    .map-focus-mode {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 200 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: var(--bg) !important;
+    }
+    html.map-focus-mode,
+    body.map-focus-mode { overflow: hidden !important; }
+    .map-focus-mode .map-pane {
+      min-height: 100vh !important;
+      height: 100vh !important;
+      width: 100% !important;
+      border-radius: 0 !important;
+    }
+    .map-focus-mode .map-panel {
+      height: 100vh !important;
+      border-radius: 0 !important;
+      border: 0 !important;
+    }
+    .map-focus-mode .map-topbar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 20;
+      min-height: 58px;
+      padding: 10px 14px;
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+    .map-focus-mode .map-stage,
+    .map-focus-mode #offline-map {
+      min-height: 100vh !important;
+      height: 100vh !important;
+    }
+    .map-focus-mode .map-controls { top: 74px; }
     .place-directory-header { display:flex; justify-content:space-between; gap:10px; align-items:end; }
     .directory-stats { color:var(--muted); font-size:.76rem; }
     .analytics-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
@@ -963,6 +1002,254 @@
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.css">
   <script src="https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sql.js@1.14.2/dist/sql-wasm.js"></script>
+
+<style id="final-fullscreen-map-overrides">
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+  body { background: var(--map-water) !important; }
+  .app-shell {
+    position: relative !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  #trip-header,
+  #day-navigation,
+  .timeline-pane,
+  .map-topbar,
+  .map-legend,
+  #mobile-bottom-nav,
+  #chat-fab,
+  #chat-drawer,
+  #drawer-overlay {
+    display: none !important;
+  }
+  .workspace {
+    display: block !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .map-pane,
+  .workspace.map-mode .map-pane,
+  .map-focus-mode .map-pane {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: 1 !important;
+  }
+  .map-panel {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }
+  #map-stage,
+  .map-focus-mode .map-stage,
+  .workspace.map-mode .map-stage,
+  .map-focus-mode #offline-map,
+  .workspace.map-mode #offline-map {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    border: 0 !important;
+  }
+  #offline-map {
+    background: var(--map-water) !important;
+  }
+  #offline-map .maplibregl-canvas-container,
+  #offline-map .maplibregl-canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  .map-controls {
+    position: absolute !important;
+    top: auto !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    z-index: 20 !important;
+    gap: 6px !important;
+  }
+  .map-controls .button {
+    min-width: 40px !important;
+    min-height: 38px !important;
+    padding: 5px 9px !important;
+    border-radius: 10px !important;
+    background: color-mix(in srgb, var(--surface) 90%, transparent) !important;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 6px 18px rgba(0,0,0,.14) !important;
+  }
+  .maplibregl-control-container { z-index: 19 !important; }
+  .maplibregl-ctrl-top-right { top: 12px !important; right: 12px !important; }
+  .maplibregl-ctrl-group {
+    border-radius: 10px !important;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,.14) !important;
+  }
+  .full-map-day-filter {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: calc(100vw - 92px);
+    padding: 6px;
+    overflow-x: auto;
+    border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 8px 24px rgba(20,30,50,.16);
+    scrollbar-width: none;
+  }
+  .full-map-day-filter::-webkit-scrollbar { display: none; }
+  .full-map-day-label {
+    flex: 0 0 auto;
+    padding: 0 5px;
+    color: var(--muted);
+    font: 850 .62rem/30px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: .08em;
+  }
+  .full-map-day-btn {
+    flex: 0 0 auto;
+    min-width: 39px;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--muted);
+    font-size: .7rem;
+    font-weight: 850;
+  }
+  .full-map-day-btn:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .full-map-day-btn.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .map-empty { z-index: 15 !important; }
+  #offline-map-label-layer { z-index: 8 !important; }
+  .offline-map-marker { z-index: 10 !important; }
+  .maplibregl-popup { z-index: 60 !important; }
+  .maplibregl-popup-content {
+    padding: 11px 12px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.2) !important;
+  }
+  .offline-popup { max-width: 270px !important; }
+  .offline-popup strong { display:block; font-size:.9rem; line-height:1.3; }
+  .offline-popup .popup-meta { margin-top:4px; color:var(--muted); font-size:.72rem; line-height:1.35; }
+  .offline-popup .popup-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
+  .offline-popup .popup-actions button {
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--surface-2);
+    color:var(--text);
+    padding:5px 8px;
+    font-size:.68rem;
+    font-weight:800;
+  }
+  #modal-backdrop, #lightbox { z-index: 100; }
+  #toast { z-index: 120; }
+  @media (max-width: 640px) {
+    .full-map-day-filter {
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      max-width: none;
+      padding: 5px;
+    }
+    .map-controls { right: 8px !important; bottom: 8px !important; }
+    .map-controls .button { min-width: 38px !important; min-height: 36px !important; }
+    .maplibregl-ctrl-top-right { top: 8px !important; right: 8px !important; }
+  }
+</style>
+
+
+<style id="fullscreen-map-ux">
+html,body{width:100%;height:100%;margin:0!important;padding:0!important;overflow:hidden!important}
+body{min-width:0!important;background:var(--map-water)!important}
+body>.app-shell{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;margin:0!important;padding:0!important;z-index:1!important}
+#trip-header,#day-navigation,.timeline-pane,.inspector-pane,#mobile-bottom-nav,#chat-fab,#chat-drawer,#drawer-overlay{display:none!important}
+.workspace,.workspace.map-mode,.workspace.places-mode{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;margin:0!important;padding:0!important;background:transparent!important}
+.map-pane{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;margin:0!important;padding:0!important}
+.map-panel{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;overflow:hidden!important}
+.map-topbar{display:none!important}
+.map-stage,#offline-map,.map-focus-mode .map-stage,.map-focus-mode #offline-map{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;border:0!important}
+.map-controls{top:auto!important;right:14px!important;bottom:18px!important;z-index:40!important;display:flex!important;flex-direction:column!important;gap:7px!important}
+.map-controls .button{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;padding:0!important;border-radius:11px!important;background:rgba(255,255,255,.88)!important;color:#182333!important;border:1px solid rgba(40,55,70,.16)!important;backdrop-filter:blur(10px)!important;box-shadow:0 7px 18px rgba(25,35,50,.16)!important}
+body.dark .map-controls .button{background:rgba(20,31,39,.88)!important;color:#f2f7fa!important}
+.map-legend{left:14px!important;bottom:16px!important;z-index:35!important;max-width:210px!important;padding:7px 9px!important;font-size:.63rem!important;line-height:1.65!important;border-radius:10px!important;background:rgba(255,255,255,.84)!important;backdrop-filter:blur(10px)!important;box-shadow:0 7px 20px rgba(25,35,50,.12)!important}
+body.dark .map-legend{background:rgba(20,31,39,.84)!important}
+#map-empty{z-index:20!important}
+#map-preview{right:14px!important;bottom:76px!important;width:min(310px,calc(100vw - 28px))!important;z-index:32!important;padding:12px!important}
+#map-route-card{left:14px!important;top:112px!important;z-index:31!important;max-width:min(320px,calc(100vw - 28px))!important}
+#layer-popover{right:14px!important;top:14px!important}
+.full-map-day-filter{position:absolute;top:14px;left:14px;z-index:1000;pointer-events:auto;display:flex;align-items:center;gap:5px;padding:7px;border:1px solid rgba(255,255,255,.55);border-radius:13px;background:rgba(255,255,255,.80);backdrop-filter:blur(14px);box-shadow:0 10px 28px rgba(26,38,52,.16);color:#25323c;transition:all .2s ease;max-width:calc(100vw - 28px)}
+body.dark .full-map-day-filter{background:rgba(20,31,39,.84);border-color:rgba(226,237,244,.15);color:#f1f6f8}
+.full-map-day-filter.collapsed{padding:0;background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none}
+.full-map-day-toggle{position:relative;z-index:1001;pointer-events:auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 11px;border:1px solid rgba(67,85,100,.18);border-radius:10px;background:rgba(255,255,255,.9);color:#25313b;font-weight:900;font-size:.7rem;letter-spacing:.06em;cursor:pointer;white-space:nowrap}
+body.dark .full-map-day-toggle{background:rgba(20,31,39,.94);color:#f1f6f8;border-color:rgba(226,237,244,.15)}
+.full-map-day-body{display:flex;align-items:center;gap:4px;max-width:calc(100vw - 100px);overflow-x:auto;scrollbar-width:none;opacity:1;transform:scale(1);transform-origin:left center;transition:opacity .16s ease,transform .16s ease,max-width .2s ease}
+.full-map-day-filter.collapsed .full-map-day-body{max-width:0;opacity:0;transform:scale(.96);overflow:hidden}
+.full-map-day-label{font-size:.63rem;font-weight:900;letter-spacing:.1em;opacity:.62;padding:0 4px 0 3px;white-space:nowrap}
+.full-map-day-btn{position:relative;z-index:1001;pointer-events:auto;height:30px;min-width:34px;padding:0 9px;border:1px solid rgba(67,85,100,.16);border-radius:999px;background:rgba(255,255,255,.72);color:#596873;font-size:.68rem;font-weight:900;cursor:pointer;white-space:nowrap;transition:.16s ease}
+body.dark .full-map-day-btn{background:rgba(29,42,51,.82);color:#b8c6cd;border-color:rgba(226,237,244,.12)}
+.full-map-day-btn:hover{transform:translateY(-1px);border-color:rgba(96,87,232,.45)}
+.full-map-day-btn.active{background:#6057e8;color:white;border-color:#6057e8;box-shadow:0 5px 14px rgba(96,87,232,.26)}
+.offline-map-marker{z-index:8}
+.offline-map-marker-core{width:28px!important;height:28px!important;font-size:11px!important;border-width:2px!important}
+.offline-map-marker.selected .offline-map-marker-core{transform:scale(1.13)!important}
+.offline-map-marker-label{left:30px!important;top:-7px!important;max-width:170px!important;padding:4px 7px!important;border-radius:8px!important;font-size:10px!important;line-height:1.12!important;background:rgba(255,255,255,.92)!important;box-shadow:0 4px 14px rgba(20,30,45,.11)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+body.dark .offline-map-marker-label{background:rgba(20,31,39,.92)!important}
+.offline-map-marker-label span{font-size:7.7px!important;opacity:.82}
+.offline-map-marker:not(.selected) .offline-map-marker-label{transition:opacity .16s ease,transform .16s ease}
+.maplibregl-popup{z-index:60!important}
+.maplibregl-popup-content{min-width:0!important;width:min(300px,calc(100vw - 28px))!important;max-width:min(300px,calc(100vw - 28px))!important;border-radius:13px!important}
+.offline-popup{padding:12px!important}
+.offline-popup strong{font-size:.9rem!important;line-height:1.25!important}
+.offline-popup .popup-meta{font-size:.7rem!important;line-height:1.35!important}
+.marker-cluster-label{pointer-events:none}
+@media (max-width:600px){
+ .full-map-day-filter{top:10px;left:10px;right:10px;max-width:none;padding:6px}
+ .full-map-day-filter:not(.collapsed){align-items:flex-start}
+ .full-map-day-body{max-width:calc(100vw - 88px);flex-wrap:wrap;overflow-x:visible}
+ .full-map-day-label{display:none}
+ .full-map-day-btn{height:29px;min-width:33px;padding:0 8px}
+ .map-controls{right:10px!important;bottom:10px!important}
+ .map-controls .button{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important}
+ .map-legend{left:10px!important;bottom:10px!important;max-width:165px!important;font-size:.58rem!important}
+ #map-preview{left:10px!important;right:10px!important;bottom:58px!important;width:auto!important}
+ #map-route-card{left:10px!important;top:98px!important;max-width:calc(100vw - 20px)!important}
+ .offline-map-marker-label{max-width:135px!important}
+}
+@media (prefers-reduced-motion:reduce){.full-map-day-filter,.full-map-day-body,.full-map-day-btn{transition:none!important}}
+</style>
+
 </head>
 <body>
   <main class="app-shell">
@@ -2429,11 +2716,14 @@ fileName: t.attachmentFileName
 
   function renderMapMode() {
     const ws = document.querySelector(".workspace");
-    /* In Map mode we intentionally show one day at a time. */
-    if (state.mapDay === "all") state.mapDay = state.selectedDay === "all" ? 1 : state.selectedDay;
+    /* Map mode defaults to the complete trip; the floating day selector can switch to one day. */
+    if (state.mapDay === undefined || state.mapDay === null) state.mapDay = "all";
     state.selectedDay = state.mapDay;
-    ws.classList.remove("places-mode","map-focus-mode");
-    ws.classList.add("map-mode");
+    ws.classList.remove("places-mode");
+    ws.classList.add("map-mode","map-focus-mode");
+    mapState.fullscreen=true;
+    document.body.classList.add("map-focus-mode");
+    document.documentElement.classList.add("map-focus-mode");
     const timelinePane = ws.querySelector(".timeline-pane");
     timelinePane.innerHTML = '<div class="mode-panel pane-scroll">' +
       '<div class="section-heading"><div><div class="mode-eyebrow">Independent map</div><h2>Trip map</h2><p>Browse places independently from the timeline.</p></div><span class="directory-stats">' + mapFilteredActivities().length + ' points</span></div>' +
@@ -2909,7 +3199,7 @@ fileName: t.attachmentFileName
     state.activeView=next;
     state.overview=next==="overview";
     if(next==="map") {
-      state.mapDay = state.selectedDay === "all" ? 1 : state.selectedDay;
+      state.mapDay = state.selectedDay === "all" ? "all" : state.selectedDay;
       state.selectedDay = state.mapDay;
     }
     renderCurrentEnhancedView(next!=="overview" && next!=="places");
@@ -2935,8 +3225,13 @@ fileName: t.attachmentFileName
     const ws=document.querySelector(".workspace");
     mapState.fullscreen=!mapState.fullscreen;
     ws.classList.toggle("map-focus-mode",mapState.fullscreen);
+    document.body.classList.toggle("map-focus-mode",mapState.fullscreen);
+    document.documentElement.classList.toggle("map-focus-mode",mapState.fullscreen);
     const button=document.querySelector('[data-action="map-fullscreen"]');
     if(button)button.textContent=mapState.fullscreen?"Close Map":"Expand Map";
+    requestAnimationFrame(function(){
+      if(mlMap && typeof mlMap.resize==="function") mlMap.resize();
+    });
     if(mapState.fullscreen) showToast("Map focus mode enabled. Press ESC to exit.");
     else showToast("Map focus mode closed.");
   }
@@ -4117,9 +4412,9 @@ fileName: t.attachmentFileName
 
 
   /* =========================================================
-     FINAL MAPLIBRE + MBTILES OFFLINE ADAPTER
+     FINAL MAPLIBRE + HUGGING FACE MBTILES ADAPTER
      ---------------------------------------------------------
-     - Uses ./map.mbtiles as the single local map archive.
+     - Uses the public Hugging Face Bucket object as the single map archive.
      - Uses SQL.js to read the SQLite/MBTiles container.
      - Converts MBTiles TMS rows to XYZ rows for MapLibre.
      - Supports vector MBTiles and raster MBTiles.
@@ -4129,7 +4424,7 @@ fileName: t.attachmentFileName
     "use strict";
 
     const OFFLINE_MAP_URL = "https://huggingface.co/buckets/hacervietnam/holiday/resolve/map.mbtiles";
-    const OFFLINE_MAP_CACHE = "itinerary-offline-map-v2";
+    const OFFLINE_MAP_CACHE = "itinerary-offline-map-v3-hf";
     const MAP_STATUS_ID = "offline-map-status";
     const MAP_LABEL_LAYER_ID = "offline-map-label-layer";
     const ROUTE_SOURCE_ID = "offline-itinerary-routes";
@@ -4288,71 +4583,123 @@ fileName: t.attachmentFileName
     async function loadMbtiles(){
       setMapStatus("Loading offline map…", false);
 
-      // First visit: download from Hugging Face and cache the response locally.
-      // Later visits: reuse the cached 293 MB archive instead of downloading it again.
-      let response = null;
-      try {
-        if (window.caches) {
-          const cache = await caches.open(OFFLINE_MAP_CACHE);
-          response = await cache.match(OFFLINE_MAP_URL);
-        }
-      } catch (cacheError) {
-        console.warn("[Offline Map] Cache lookup failed:", cacheError);
-      }
-
-      if (!response) {
-        response = await fetch(OFFLINE_MAP_URL, {
-          cache: "force-cache",
-          credentials: "omit"
-        });
-        if(!response.ok) throw new Error("HTTP " + response.status + " while loading " + OFFLINE_MAP_URL);
-
-        try {
-          if (window.caches) {
-            const cache = await caches.open(OFFLINE_MAP_CACHE);
-            await cache.put(OFFLINE_MAP_URL, response.clone());
+      async function cacheGet(){
+        try{
+          if(window.caches){
+            const cache=await caches.open(OFFLINE_MAP_CACHE);
+            return await cache.match(OFFLINE_MAP_URL);
           }
-        } catch (cacheError) {
-          console.warn("[Offline Map] Cache save failed:", cacheError);
+        }catch(e){ console.warn("[Offline Map] Cache lookup failed:",e); }
+        return null;
+      }
+
+      async function cachePut(response){
+        try{
+          if(window.caches){
+            const cache=await caches.open(OFFLINE_MAP_CACHE);
+            await cache.put(OFFLINE_MAP_URL,response.clone());
+          }
+        }catch(e){ console.warn("[Offline Map] Cache save failed:",e); }
+      }
+
+      // Cached complete archive: fastest possible path on repeat visits.
+      let response=await cacheGet();
+      if(response){
+        const cachedLength=Number(response.headers.get("content-length")||0);
+        if(cachedLength) setMapStatus("Using cached map · "+Math.round(cachedLength/1048576)+" MB",false);
+      }
+
+      // First visit: use parallel HTTP Range requests when the server/CDN supports them.
+      // This keeps the exact MBTiles file and SQL.js pipeline, but avoids relying on one
+      // long single connection for the whole archive. Hugging Face supports byte ranges.
+      if(!response){
+        const RANGE_CHUNK=8*1024*1024;
+        const CONCURRENCY=6;
+        let total=0;
+        let ranged=true;
+        try{
+          const probe=await fetch(OFFLINE_MAP_URL,{method:"GET",headers:{"Range":"bytes=0-0"},cache:"no-store",credentials:"omit"});
+          const contentRange=probe.headers.get("content-range")||"";
+          const acceptRanges=probe.headers.get("accept-ranges")||"";
+          const m=contentRange.match(/\/([0-9]+)$/);
+          total=m?Number(m[1]):0;
+          ranged=probe.status===206 && total>1 && (/bytes/i.test(acceptRanges)||contentRange);
+          try{ await probe.body?.cancel(); }catch(_e){}
+        }catch(e){
+          ranged=false;
+          console.warn("[Offline Map] Range probe failed, falling back to normal download:",e);
+        }
+
+        if(ranged){
+          const parts=new Array(Math.ceil(total/RANGE_CHUNK));
+          let nextPart=0;
+          let downloaded=0;
+          setMapStatus("Downloading map · 0%",false);
+          async function worker(){
+            while(true){
+              const i=nextPart++;
+              if(i>=parts.length)return;
+              const startByte=i*RANGE_CHUNK;
+              const endByte=Math.min(total-1,startByte+RANGE_CHUNK-1);
+              let lastError=null;
+              for(let attempt=0;attempt<3;attempt++){
+                try{
+                  const r=await fetch(OFFLINE_MAP_URL,{headers:{"Range":"bytes="+startByte+"-"+endByte},cache:"no-store",credentials:"omit"});
+                  if(r.status!==206) throw new Error("Range request returned HTTP "+r.status);
+                  const b=await r.arrayBuffer();
+                  const expected=endByte-startByte+1;
+                  if(b.byteLength!==expected) throw new Error("Range length mismatch for bytes "+startByte+"-"+endByte);
+                  parts[i]=new Uint8Array(b);
+                  downloaded+=b.byteLength;
+                  setMapStatus("Downloading map · "+Math.min(100,Math.round(downloaded/total*100))+"%",false);
+                  lastError=null;
+                  break;
+                }catch(e){
+                  lastError=e;
+                  await new Promise(r=>setTimeout(r,250*(attempt+1)));
+                }
+              }
+              if(lastError) throw lastError;
+            }
+          }
+          await Promise.all(Array.from({length:Math.min(CONCURRENCY,parts.length)},worker));
+          const whole=new Uint8Array(total);
+          let offset=0;
+          for(const part of parts){ whole.set(part,offset); offset+=part.byteLength; }
+          response=new Response(whole,{status:200,headers:{"Content-Type":"application/octet-stream","Content-Length":String(total)}});
+          await cachePut(response);
+        }else{
+          response=await fetch(OFFLINE_MAP_URL,{cache:"force-cache",credentials:"omit"});
+          if(!response.ok) throw new Error("HTTP "+response.status+" while loading "+OFFLINE_MAP_URL);
+          await cachePut(response);
         }
       }
 
-      const contentLength = Number(response.headers.get("content-length") || 0);
-      if (contentLength) {
-        setMapStatus("Downloading map " + Math.round(contentLength / 1048576) + " MB…", false);
-      } else {
-        setMapStatus("Reading offline map…", false);
-      }
+      const contentLength=Number(response.headers.get("content-length")||0);
+      if(contentLength) setMapStatus("Reading map · "+Math.round(contentLength/1048576)+" MB",false);
+      const buffer=await response.arrayBuffer();
+      if(!buffer || buffer.byteLength<16) throw new Error("MBTiles file is empty or too small.");
+      if(buffer.byteLength>1024*1024*1024) console.warn("[Offline Map] Large MBTiles file:",buffer.byteLength);
 
-      const buffer = await response.arrayBuffer();
-      if(!buffer || buffer.byteLength < 16) throw new Error("MBTiles file is empty or too small.");
-      if(buffer.byteLength > 1024 * 1024 * 1024) console.warn("[Offline Map] Large MBTiles file:", buffer.byteLength);
+      if(typeof initSqlJs!=="function") throw new Error("SQL.js failed to load. Check the browser connection and the SQL.js CDN.");
+      const SQL=await initSqlJs({locateFile:function(file){return "https://cdn.jsdelivr.net/npm/sql.js@1.14.2/dist/"+file;}});
+      db=new SQL.Database(new Uint8Array(buffer));
+      lastMetadata=readMetadata(db);
 
-      if(typeof initSqlJs !== "function") throw new Error("SQL.js failed to load. Check the browser connection and the SQL.js CDN.");
-      const SQL = await initSqlJs({
-        locateFile: function(file){ return "https://cdn.jsdelivr.net/npm/sql.js@1.14.2/dist/" + file; }
-      });
-      db = new SQL.Database(new Uint8Array(buffer));
-      lastMetadata = readMetadata(db);
-
-      const countResult = db.exec("SELECT COUNT(*) AS c FROM tiles");
-      const tileCount = countResult && countResult[0] ? Number(countResult[0].values[0][0]) : 0;
+      const countResult=db.exec("SELECT COUNT(*) AS c FROM tiles");
+      const tileCount=countResult&&countResult[0]?Number(countResult[0].values[0][0]):0;
       if(!tileCount) throw new Error("The MBTiles database contains no tiles.");
 
-      const first = db.exec("SELECT zoom_level, tile_column, tile_row, tile_data FROM tiles ORDER BY zoom_level LIMIT 1");
-      const firstTile = first && first[0] && first[0].values[0] ? new Uint8Array(first[0].values[0][3]) : null;
-      mbtilesFormat = detectFormat(lastMetadata, firstTile);
-      vectorLayerMetadata = parseVectorLayerMetadata(lastMetadata);
+      const first=db.exec("SELECT zoom_level, tile_column, tile_row, tile_data FROM tiles ORDER BY zoom_level LIMIT 1");
+      const firstTile=first&&first[0]&&first[0].values[0]?new Uint8Array(first[0].values[0][3]):null;
+      mbtilesFormat=detectFormat(lastMetadata,firstTile);
+      vectorLayerMetadata=parseVectorLayerMetadata(lastMetadata);
 
-      console.info("[Offline Map] MBTiles loaded", {
-        bytes: buffer.byteLength,
-        tiles: tileCount,
-        format: mbtilesFormat,
-        minzoom: lastMetadata.minzoom,
-        maxzoom: lastMetadata.maxzoom,
-        bounds: lastMetadata.bounds,
-        center: lastMetadata.center,
-        vectorLayers: vectorLayerMetadata.map(function(v){return v.id;})
+      console.info("[Offline Map] MBTiles loaded",{
+        bytes:buffer.byteLength,tiles:tileCount,format:mbtilesFormat,
+        minzoom:lastMetadata.minzoom,maxzoom:lastMetadata.maxzoom,
+        bounds:lastMetadata.bounds,center:lastMetadata.center,
+        vectorLayers:vectorLayerMetadata.map(function(v){return v.id;})
       });
     }
 
@@ -4508,16 +4855,17 @@ fileName: t.attachmentFileName
       const el=document.createElement("button");
       el.type="button"; el.className="offline-map-marker"; el.setAttribute("data-action","map-marker"); el.setAttribute("data-activity",activity.id);
       el.setAttribute("aria-label",(activity.start||"Time TBD") + ", " + activityLabel(activity) + ", " + locationLabel(activity));
-      el.innerHTML='<span class="offline-map-marker-core">'+escapeHtml(activity.sequence||1)+'</span>'+(state.mapLayers.labels?'<span class="offline-map-marker-label">'+escapeHtml(activityLabel(activity))+'<span>'+escapeHtml((activity.start||"")+" · "+locationLabel(activity))+'</span></span>':"");
+      el.innerHTML='<span class="offline-map-marker-core">'+escapeHtml(activity.sequence||1)+'</span>'+(state.mapLayers.labels?'<span class="offline-map-marker-label">'+escapeHtml(activityLabel(activity))+'<span>D'+escapeHtml(activity.day||"?")+' · '+escapeHtml(activity.start||"Time TBD")+' · '+escapeHtml(locationLabel(activity))+'</span></span>':"");
       return el;
     }
 
     function popupHtml(activity){
-      const buttonDetails='<button type="button" data-action="map-details" data-activity="'+escapeHtml(activity.id)+'">Details</button>';
       const safeExternal=safeMapsUrl(activity.mapsUrl);
       const buttonMap=safeExternal?'<button type="button" data-action="map-open-external" data-activity="'+escapeHtml(activity.id)+'">Google Maps ↗</button>':"";
       const buttonFocus='<button type="button" data-action="focus-place" data-activity="'+escapeHtml(activity.id)+'">Focus</button>';
-      return '<div class="offline-popup"><strong>'+escapeHtml(activity.start||"Time TBD")+' · '+escapeHtml(activityLabel(activity))+'</strong><div class="popup-meta">⌖ '+escapeHtml(locationLabel(activity))+'</div><div class="popup-meta">'+escapeHtml(typeLabel(activity))+(activity.city?' · '+escapeHtml(activity.city):'')+'</div><div class="popup-actions">'+buttonDetails+buttonMap+buttonFocus+'</div></div>';
+      const stopText='Day '+escapeHtml(activity.day||"?")+' · Stop '+escapeHtml(activity.sequence||"?");
+      const transport=activity.transport&&activity.transport.mode?'<div class="popup-meta">↗ '+escapeHtml(activity.transport.mode)+(activity.transport.duration?' · '+escapeHtml(formatMinutes(activity.transport.duration)):'')+(activity.transport.distance?' · '+escapeHtml(activity.transport.distance):'')+'</div>':"";
+      return '<div class="offline-popup"><strong>'+escapeHtml(activityLabel(activity))+'</strong><div class="popup-meta">'+escapeHtml(stopText)+(activity.start?' · '+escapeHtml(activity.start):'')+'</div><div class="popup-meta">⌖ '+escapeHtml(locationLabel(activity))+'</div>'+transport+'<div class="popup-actions">'+buttonMap+buttonFocus+'</div></div>';
     }
 
     function openActivityPopup(activity){
@@ -4715,7 +5063,572 @@ fileName: t.attachmentFileName
 
   initializeApp();
 
+  /* FINAL MAP-ONLY BOOT: preserve all itinerary/map data, but make the map the only primary UI. */
+  (function bootFullscreenMap(){
+    state.activeView = "map";
+    state.overview = false;
+    state.selectedDay = "all";
+    state.mapDay = "all";
+    state.selectedActivityId = null;
+    mapState.selectedActivityId = null;
+    mapState.fullscreen = true;
+
+    function renderFloatingDayFilter(){
+      let host = document.getElementById("full-map-day-filter");
+      if(!host){
+        host=document.createElement("nav");
+        host.id="full-map-day-filter";
+        host.className="full-map-day-filter";
+        host.setAttribute("aria-label","Map day filter");
+        document.body.appendChild(host);
+      }
+      const current=String(state.mapDay);
+      host.innerHTML='<span class="full-map-day-label">TRIP</span>'+
+        '<button type="button" class="full-map-day-btn '+(current==="all"?"active":"")+'" data-action="map-select-day" data-day="all" aria-pressed="'+(current==="all")+'">ALL</button>'+
+        itinerary.map(function(day){
+          const key=String(day.day);
+          return '<button type="button" class="full-map-day-btn '+(current===key?"active":"")+'" data-action="map-select-day" data-day="'+day.day+'" aria-pressed="'+(current===key)+'">D'+day.day+'</button>';
+        }).join("");
+    }
+
+    renderFloatingDayFilter();
+
+    /* Keep the floating selector synchronized when any existing map-day control is used. */
+    document.addEventListener("click",function(event){
+      const control=event.target.closest && event.target.closest('[data-action="map-select-day"]');
+      if(!control)return;
+      requestAnimationFrame(function(){
+        renderFloatingDayFilter();
+        const map = document.getElementById("offline-map");
+        if(map) map.dispatchEvent(new Event("fullscreen-map-filter-updated"));
+      });
+    });
+
+    requestAnimationFrame(function(){
+      renderCurrentEnhancedView(true);
+      requestAnimationFrame(function(){
+        fitMapToActivities(mapFilteredActivities());
+      });
+    });
+  })();
+
 
   </script>
+
+<script id="fullscreen-map-ux-script">
+(function(){
+  "use strict";
+
+  function ensureDayFilterHost(){
+    let host=document.getElementById("full-map-day-filter");
+    const stage=document.getElementById("map-stage");
+    if(!stage) return null;
+    if(!host){
+      host=document.createElement("nav");
+      host.id="full-map-day-filter";
+      host.className="full-map-day-filter";
+      host.setAttribute("aria-label","Map day filter");
+      stage.appendChild(host);
+    }else if(host.parentElement!==stage){
+      stage.appendChild(host);
+    }
+    return host;
+  }
+
+  function dayFilterMarkup(host){
+    const current=String(state.mapDay);
+    const collapsed=host && host.classList.contains("collapsed");
+    return '<button type="button" class="full-map-day-toggle" data-action="toggle-day-filter" aria-expanded="'+String(!collapsed)+'" aria-controls="full-map-day-body">☰ DAYS</button>'+
+      '<div id="full-map-day-body" class="full-map-day-body" role="group" aria-label="Trip days">'+
+      '<span class="full-map-day-label">TRIP DAYS</span>'+['all'].concat(itinerary.map(function(d){return String(d.day);})).map(function(key){
+        const active=current===key;
+        return '<button type="button" class="full-map-day-btn'+(active?' active':'')+'" data-action="map-select-day" data-day="'+(key==='all'?'all':key)+'" aria-pressed="'+String(active)+'">'+(key==='all'?'ALL':'D'+key)+'</button>';
+      }).join('')+
+      '</div>';
+  }
+
+  function renderDayFilter(){
+    const host=ensureDayFilterHost();
+    if(!host) return null;
+    const wasCollapsed=host.classList.contains("collapsed");
+    host.innerHTML=dayFilterMarkup(host);
+    if(wasCollapsed) host.classList.add("collapsed");
+
+    const toggle=host.querySelector('[data-action="toggle-day-filter"]');
+    if(toggle){
+      toggle.addEventListener("click",function(event){
+        event.preventDefault();
+        event.stopPropagation();
+        host.classList.toggle("collapsed");
+        toggle.setAttribute("aria-expanded",String(!host.classList.contains("collapsed")));
+      });
+    }
+    return host;
+  }
+
+  function syncDayFilter(){
+    const host=document.getElementById("full-map-day-filter");
+    if(!host) return;
+    const current=String(state.mapDay);
+    host.querySelectorAll(".full-map-day-btn").forEach(function(btn){
+      const active=String(btn.getAttribute("data-day"))===current;
+      btn.classList.toggle("active",active);
+      btn.setAttribute("aria-pressed",String(active));
+    });
+  }
+
+  function visibleForMap(){
+    if(typeof mapFilteredActivities==="function") return mapFilteredActivities();
+    return allActivities().filter(function(a){return !!getActivityCoordinates(a);});
+  }
+
+  function applyDay(value){
+    state.mapDay=value==='all'?'all':Number(value);
+    state.selectedDay=state.mapDay;
+    state.activeView="map";
+    state.overview=false;
+    state.selectedActivityId=null;
+    state.selectedPlaceId=null;
+    mapState.selectedActivityId=null;
+    mapState.selectedRoute=null;
+
+    renderDayFilter();
+    const list=visibleForMap();
+    if(typeof renderMapTopbar==='function') renderMapTopbar("Trip map",state.mapDay==='all'?"All itinerary locations":"Day "+state.mapDay+" locations");
+    renderOfflineMap(list);
+    syncDayFilter();
+    requestAnimationFrame(function(){
+      if(typeof fitMapToActivities==='function') fitMapToActivities(list);
+    });
+  }
+
+  /* Direct listener on the overlay itself. This avoids the map canvas swallowing clicks. */
+  function bindDayFilter(){
+    const host=ensureDayFilterHost();
+    if(!host || host.dataset.bound==="1") return;
+    host.dataset.bound="1";
+    host.addEventListener("click",function(event){
+      const dayButton=event.target.closest('[data-action="map-select-day"]');
+      if(dayButton){
+        event.preventDefault();
+        event.stopPropagation();
+        applyDay(dayButton.getAttribute("data-day")||"all");
+        return;
+      }
+    });
+  }
+
+  /* Keep the main app in map-only mode while preserving its original data/functions. */
+  const originalRender=window.renderCurrentEnhancedView;
+  window.renderCurrentEnhancedView=function(autoFit){
+    state.activeView="map";
+    state.overview=false;
+    renderDayFilter();
+    bindDayFilter();
+    if(typeof window.renderMapMode==='function') window.renderMapMode();
+    const list=visibleForMap();
+    renderOfflineMap(list);
+    if(autoFit) requestAnimationFrame(function(){fitMapToActivities(list);});
+    syncDayFilter();
+  };
+
+  state.activeView="map";
+  state.overview=false;
+  state.selectedDay="all";
+  state.mapDay="all";
+  state.selectedActivityId=null;
+  mapState.selectedActivityId=null;
+  mapState.fullscreen=true;
+
+  requestAnimationFrame(function(){
+    const ws=document.querySelector(".workspace");
+    document.documentElement.classList.add("map-focus-mode");
+    document.body.classList.add("map-focus-mode");
+    if(ws) ws.classList.add("map-focus-mode");
+
+    renderDayFilter();
+    bindDayFilter();
+
+    if(typeof initializeMapLibre==='function') initializeMapLibre();
+    setTimeout(function(){
+      const list=visibleForMap();
+      if(typeof renderOfflineMap==='function') renderOfflineMap(list);
+      if(typeof fitMapToActivities==='function') fitMapToActivities(list);
+      renderDayFilter();
+      bindDayFilter();
+      syncDayFilter();
+    },0);
+  });
+})();
+</script>
+
+
+
+<!-- FINAL DAY ↔ LOCATION UX PATCH -->
+<style id="day-location-ux-patch">
+  .full-map-day-filter.day-location-enhanced { gap: 6px; }
+  .full-map-day-filter.day-location-enhanced .full-map-day-btn.active {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 6px 18px rgba(96,87,232,.26) !important;
+  }
+  .full-map-day-filter.day-location-enhanced .full-map-day-btn[data-day="all"] {
+    padding-inline: 11px;
+  }
+  .offline-location-popup {
+    width: min(320px, calc(100vw - 36px));
+    color: var(--text);
+  }
+  .offline-location-popup .olp-kicker {
+    font-size: .62rem;
+    font-weight: 900;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .offline-location-popup h3 {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.25;
+    letter-spacing: -.02em;
+    color: var(--text);
+  }
+  .offline-location-popup .olp-sub {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: .71rem;
+    line-height: 1.35;
+  }
+  .offline-location-popup .olp-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 9px;
+  }
+  .offline-location-popup .olp-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 3px 7px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: .65rem;
+    font-weight: 800;
+  }
+  .offline-location-popup .olp-badge.accent {
+    background: var(--accent-soft);
+    border-color: transparent;
+    color: var(--accent);
+  }
+  .offline-location-popup .olp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    margin-top: 10px;
+  }
+  .offline-location-popup .olp-item {
+    padding: 8px 9px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--surface-2);
+    min-width: 0;
+  }
+  .offline-location-popup .olp-item small {
+    display: block;
+    color: var(--muted);
+    font-size: .61rem;
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .offline-location-popup .olp-item div {
+    color: var(--text);
+    font-size: .71rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .offline-location-popup .olp-about {
+    margin-top: 9px;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+  }
+  .offline-location-popup .olp-about small {
+    display: block;
+    color: var(--muted);
+    font-size: .61rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .offline-location-popup .olp-about p {
+    margin: 0;
+    color: var(--text);
+    font-size: .73rem;
+    line-height: 1.48;
+  }
+  .offline-location-popup .olp-next {
+    margin-top: 8px;
+    padding: 8px 9px;
+    border-radius: 9px;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: .68rem;
+    line-height: 1.4;
+  }
+  .offline-location-popup .olp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .offline-location-popup .olp-actions button,
+  .offline-location-popup .olp-actions a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 31px;
+    padding: 5px 9px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text);
+    text-decoration: none;
+    font-size: .66rem;
+    font-weight: 850;
+    cursor: pointer;
+  }
+  .offline-location-popup .olp-actions button:hover,
+  .offline-location-popup .olp-actions a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  @media (max-width: 600px) {
+    .offline-location-popup { width: min(300px, calc(100vw - 34px)); }
+    .offline-location-popup .olp-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+
+<script id="day-location-ux-script">
+(function(){
+  "use strict";
+
+  function dayExists(day){
+    return day === "all" || itinerary.some(function(d){ return Number(d.day) === Number(day); });
+  }
+
+  function mapVisibleActivities(){
+    var list=allActivities().filter(function(a){ return !!getActivityCoordinates(a); });
+    if(state.mapDay !== "all") list=list.filter(function(a){ return Number(a.day)===Number(state.mapDay); });
+    var q=normalizeText(state.mapSearchQuery || "");
+    if(q){
+      list=list.filter(function(a){
+        var hay=normalizeText([a.title,a.location,a.city,a.country,a.description,a.shortDescription,a.address,a.notes,a.type,(a.tags||[]).join(" ")].join(" "));
+        return hay.indexOf(q)!==-1;
+      });
+    }
+    return list;
+  }
+
+  function typeDisplay(activity){
+    var raw=String(activity && (activity.category || activity.type) || "Activity").trim().toLowerCase();
+    var map={
+      food:"Restaurant", restaurant:"Restaurant", attraction:"Attraction", hotel:"Hotel", shopping:"Shopping",
+      transport:"Transport", nature:"Nature", cafe:"Cafe", "free time":"Free time"
+    };
+    if(map[raw]) return map[raw];
+    return raw ? raw.charAt(0).toUpperCase()+raw.slice(1) : "Activity";
+  }
+
+  function locationAbout(activity){
+    return String((activity && (activity.shortDescription || activity.description)) || "").trim();
+  }
+
+  function safeText(value, fallback){
+    var s=String(value==null?"":value).trim();
+    return escapeHtml(s || fallback || "");
+  }
+
+  function popupHtmlEnhanced(activity){
+    var all=allActivities();
+    var idx=all.findIndex(function(a){ return a.id===activity.id; });
+    var next=idx>=0 ? all[idx+1] : null;
+    var visitDuration=getActivityDuration(activity);
+    var time=(activity.start||activity.end) ? ((activity.start||"Time TBD")+""+(activity.end?" – "+activity.end:"")) : "Time TBD";
+    var about=locationAbout(activity);
+    var coords=getActivityCoordinates(activity);
+    var maps=safeMapsUrl(activity.mapsUrl);
+    var transport=activity.transport && activity.transport.mode ? activity.transport : null;
+    var address=activity.address || activity.city || activity.dayLocation || "Address not specified";
+    var nextMove=transport ? (escapeHtml(transport.mode)+(transport.duration!=null ? " · "+escapeHtml(formatMinutes(transport.duration)) : "")+(transport.distance ? " · "+escapeHtml(transport.distance) : "")) : "Not specified";
+    var nextStop=next ? locationLabel(next) : "No next stop";
+
+    return '<div class="offline-location-popup" data-location-popup-id="'+escapeHtml(activity.id)+'">'+
+      '<div class="olp-kicker">LOCATION · DAY '+escapeHtml(activity.day||"?")+'</div>'+
+      '<h3>'+safeText(locationLabel(activity),"Location not specified")+'</h3>'+
+      '<div class="olp-sub">'+safeText(activity.title,"Itinerary stop")+'</div>'+
+      '<div class="olp-badges"><span class="olp-badge accent">Day '+escapeHtml(activity.day||"?")+'</span><span class="olp-badge">'+escapeHtml(typeDisplay(activity))+'</span></div>'+
+      '<div class="olp-grid">'+
+        '<div class="olp-item"><small>Address</small><div>📍 '+safeText(address,"Address not specified")+'</div></div>'+
+        '<div class="olp-item"><small>Time</small><div>🕐 '+safeText(time,"Time TBD")+'</div></div>'+
+        '<div class="olp-item"><small>Duration</small><div>⏱ '+escapeHtml(formatMinutes(visitDuration))+'</div></div>'+
+        '<div class="olp-item"><small>Coordinates</small><div>'+(coords ? escapeHtml(coords.lat.toFixed(4)+", "+coords.lng.toFixed(4)) : "Unavailable")+'</div></div>'+
+      '</div>'+
+      '<div class="olp-about"><small>About</small><p>'+safeText(about,"No description has been added yet.")+'</p></div>'+
+      '<div class="olp-next"><b>Next move:</b> '+nextMove+'<br><b>Next stop:</b> '+safeText(nextStop,"No next stop")+'</div>'+
+      '<div class="olp-actions">'+
+        '<button type="button" data-popup-action="details" data-activity="'+escapeHtml(activity.id)+'">Details</button>'+
+        '<button type="button" data-popup-action="focus" data-activity="'+escapeHtml(activity.id)+'">Focus</button>'+
+        (maps ? '<a href="'+escapeHtml(maps)+'" target="_blank" rel="noopener noreferrer">Google Maps ↗</a>' : '')+
+      '</div>'+
+    '</div>';
+  }
+
+  function enhancePopupNode(node){
+    if(!node || !node.querySelector) return;
+    var holder=node.querySelector('.offline-popup');
+    if(!holder || holder.querySelector('.offline-location-popup')) return;
+    var selectedId=state.selectedActivityId || mapState.selectedActivityId;
+    var activity=(selectedId && getActivityById(selectedId)) || null;
+    if(!activity){
+      var title=(holder.querySelector('strong')||{}).textContent || "";
+      activity=allActivities().find(function(a){return locationLabel(a)===title || activityLabel(a)===title;}) || null;
+    }
+    if(!activity) return;
+    holder.outerHTML=popupHtmlEnhanced(activity);
+  }
+
+  function bindPopupEnhancer(){
+    var stage=document.getElementById("map-stage");
+    if(!stage || stage.dataset.locationPopupObserver==="1") return;
+    stage.dataset.locationPopupObserver="1";
+    var observer=new MutationObserver(function(mutations){
+      mutations.forEach(function(m){
+        Array.prototype.forEach.call(m.addedNodes||[],function(node){
+          if(node.nodeType===1){
+            enhancePopupNode(node);
+            if(node.querySelectorAll) node.querySelectorAll('.maplibregl-popup-content').forEach(enhancePopupNode);
+          }
+        });
+      });
+    });
+    observer.observe(stage,{childList:true,subtree:true});
+
+    stage.addEventListener("click",function(event){
+      var action=event.target.closest && event.target.closest('[data-popup-action]');
+      if(!action) return;
+      event.preventDefault();
+      event.stopPropagation();
+      var id=action.getAttribute("data-activity");
+      if(action.getAttribute("data-popup-action")==="details"){
+        if(typeof openActivityModalByIdPreserve==="function") openActivityModalByIdPreserve(id);
+        return;
+      }
+      if(action.getAttribute("data-popup-action")==="focus"){
+        if(typeof focusPlaceOnMap==="function") focusPlaceOnMap(id);
+      }
+    });
+  }
+
+  function syncDayButtons(){
+    var current=String(state.mapDay);
+    document.querySelectorAll('.full-map-day-btn[data-day]').forEach(function(btn){
+      var active=String(btn.getAttribute('data-day'))===current;
+      btn.classList.toggle('active',active);
+      btn.setAttribute('aria-pressed',String(active));
+    });
+    var nav=document.getElementById('day-navigation');
+    if(nav){
+      nav.querySelectorAll('.day-button[data-action="select-day"]').forEach(function(btn){
+        var active=String(btn.getAttribute('data-day'))===current && current!=="all";
+        btn.classList.toggle('active',active);
+        btn.setAttribute('aria-pressed',String(active));
+      });
+      var overview=nav.querySelector('.day-button[data-action="overview"]');
+      if(overview) overview.classList.toggle('active',state.overview||current==="all");
+    }
+  }
+
+  function applyMapDayEnhanced(value){
+    var normalized=value==="all" ? "all" : Number(value);
+    if(normalized!=="all" && (!Number.isFinite(normalized) || !dayExists(normalized))) return;
+    var same=String(state.mapDay)===String(normalized) && state.activeView==="map";
+    state.mapDay=normalized;
+    state.selectedDay=normalized;
+    state.activeView="map";
+    state.overview=false;
+    state.selectedPlaceId=null;
+    if(!same){
+      state.selectedActivityId=null;
+      mapState.selectedActivityId=null;
+      mapState.selectedRoute=null;
+    }
+    var list=mapVisibleActivities();
+    runtime.visibleMapActivities=list.slice();
+    syncDayButtons();
+    if(typeof renderMapTopbar==='function'){
+      renderMapTopbar("Trip map",normalized==="all" ? "All itinerary locations" : "Day "+normalized+" locations");
+    }
+    if(typeof renderOfflineMap==='function') renderOfflineMap(list);
+    if(typeof renderDayFilter==='function') renderDayFilter();
+    syncDayButtons();
+    if(typeof fitMapToActivities==='function' && list.length){
+      requestAnimationFrame(function(){ fitMapToActivities(list); });
+    }
+  }
+
+  function patchSelectMapDay(){
+    try{
+      selectMapDay=applyMapDayEnhanced;
+    }catch(error){
+      console.warn("[Day/Location Patch] Could not replace selectMapDay:",error);
+    }
+  }
+
+  function patchPlaceAndTimelineClicks(){
+    document.addEventListener('click',function(event){
+      var card=event.target.closest && event.target.closest('[data-activity-card]');
+      if(card && !event.target.closest('[data-action]')){
+        var id=card.getAttribute('data-activity-card');
+        var activity=getActivityById(id);
+        if(activity){
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          state.selectedActivityId=id;
+          mapState.selectedActivityId=id;
+          state.mapDay=Number(activity.day);
+          state.selectedDay=Number(activity.day);
+          state.activeView='map';
+          if(typeof renderOfflineMap==='function') renderOfflineMap(mapVisibleActivities());
+          if(typeof centerMapOnActivity==='function') centerMapOnActivity(activity,Math.max((mapState.zoom||1),3));
+          syncDayButtons();
+        }
+      }
+    },true);
+  }
+
+  function boot(){
+    patchSelectMapDay();
+    bindPopupEnhancer();
+    patchPlaceAndTimelineClicks();
+    if(state.mapDay===undefined || state.mapDay===null) state.mapDay=state.selectedDay==="all"?"all":state.selectedDay;
+    state.selectedDay=state.mapDay;
+    state.activeView="map";
+    syncDayButtons();
+  }
+
+  if(document.readyState==="loading") document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
+})();
+</script>
+
 </body>
 </html>
