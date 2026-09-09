@@ -1284,6 +1284,44 @@ body.dark .offline-map-marker-label{background:rgba(20,31,39,.92)!important}
               <span class="legend-line legend-mrt"></span>Rail
             </div>
             <div id="map-empty" class="map-empty">No map locations available for these filters.</div>
+
+            <button id="gps-track-launch" class="gps-track-launch" type="button" data-action="gps-toggle-panel" aria-label="GPS tracking" aria-expanded="false" title="GPS Tracking">📍</button>
+            <section id="gps-tracker-panel" class="gps-tracker-panel" hidden aria-label="GPS Track Recorder">
+              <div class="gps-tracker-head">
+                <div>
+                  <strong>GPS Track Recorder</strong>
+                  <span id="gps-track-badge" class="gps-track-badge">Ready</span>
+                </div>
+                <button class="icon-button" type="button" data-action="gps-close-panel" aria-label="Close GPS tracking">×</button>
+              </div>
+              <div class="gps-tracker-grid">
+                <div class="gps-stat"><span>Distance</span><b id="gps-stat-distance">0.00 km</b></div>
+                <div class="gps-stat"><span>Duration</span><b id="gps-stat-duration">00:00:00</b></div>
+                <div class="gps-stat"><span>Points</span><b id="gps-stat-points">0</b></div>
+                <div class="gps-stat"><span>Accuracy</span><b id="gps-stat-accuracy">—</b></div>
+              </div>
+              <div id="gps-track-status" class="gps-status" aria-live="polite">GPS is idle.</div>
+              <div class="gps-actions">
+                <button class="button primary" type="button" data-action="gps-start">▶ Start</button>
+                <button class="button" type="button" data-action="gps-pause">Ⅱ Pause</button>
+                <button class="button soft" type="button" data-action="gps-save">☁ Save GitHub</button>
+                <button class="button" type="button" data-action="gps-locate">⌖ Locate</button>
+                <button class="button" type="button" data-action="gps-stop">■ Stop</button>
+                <button class="button" type="button" data-action="gps-clear">Reset</button>
+              </div>
+              <details class="gps-settings">
+                <summary>GitHub settings</summary>
+                <div class="gps-form">
+                  <label>Owner<input id="gps-gh-owner" autocomplete="off" placeholder="your-github-name"></label>
+                  <label>Repository<input id="gps-gh-repo" autocomplete="off" placeholder="travel-planner"></label>
+                  <label>File path<input id="gps-gh-path" autocomplete="off" value="tracks"></label>
+                  <label>Personal access token<input id="gps-gh-token" type="password" autocomplete="off" placeholder="github_pat_…"></label>
+                  <button class="button" type="button" data-action="gps-save-settings">Save settings locally</button>
+                </div>
+                <div class="gps-note">The token stays in this browser session. Saving a track uses the GitHub Contents API directly. No Python, database, Google Sheets, or separate server is used.</div>
+              </details>
+            </section>
+
           </div>
         </section>
       </aside>
@@ -6659,6 +6697,369 @@ fileName: t.attachmentFileName
     }
   }
 </style>
+
+
+<style id="gps-tracker-upgrade">
+  .gps-track-launch {
+    position: fixed;
+    right: max(12px, calc(env(safe-area-inset-right) + 10px));
+    top: max(72px, calc(env(safe-area-inset-top) + 66px));
+    z-index: 101;
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    border: 1px solid rgba(40,55,70,.16);
+    border-radius: 14px;
+    background: rgba(255,255,255,.90);
+    color: #182333;
+    box-shadow: 0 8px 22px rgba(25,35,50,.18);
+    backdrop-filter: blur(12px);
+    display: grid;
+    place-items: center;
+    font-size: 1.05rem;
+    font-weight: 900;
+  }
+  body.dark .gps-track-launch { background: rgba(20,31,39,.90); color:#f2f7fa; border-color:rgba(226,237,244,.16); }
+  .gps-track-launch.is-recording { box-shadow: 0 0 0 4px rgba(239,90,125,.18), 0 8px 22px rgba(25,35,50,.18); }
+  .gps-track-launch.is-recording::after { content:""; position:absolute; width:10px; height:10px; border-radius:50%; background:#ef5a7d; transform:translate(15px,-15px); box-shadow:0 0 12px rgba(239,90,125,.7); }
+  .gps-tracker-panel {
+    position: fixed;
+    top: max(130px, calc(env(safe-area-inset-top) + 124px));
+    right: max(12px, calc(env(safe-area-inset-right) + 10px));
+    z-index: 102;
+    width: min(360px, calc(100vw - 24px));
+    max-height: min(76dvh, 720px);
+    overflow: auto;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 24px 70px rgba(10,20,40,.28);
+  }
+  .gps-tracker-panel[hidden] { display:none; }
+  .gps-tracker-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px; }
+  .gps-tracker-head strong { font-size:.95rem; }
+  .gps-tracker-head small { display:block; margin-top:2px; color:var(--muted); }
+  .gps-tracker-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:10px 0; }
+  .gps-stat { padding:9px 10px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; }
+  .gps-stat span { display:block; color:var(--muted); font-size:.67rem; }
+  .gps-stat b { display:block; margin-top:2px; font-size:.88rem; }
+  .gps-actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px; margin-top:9px; }
+  .gps-actions .button { min-height:40px; padding:7px 8px; font-size:.72rem; }
+  .gps-settings { margin-top:11px; padding-top:11px; border-top:1px solid var(--line); }
+  .gps-settings summary { cursor:pointer; color:var(--muted); font-weight:800; font-size:.72rem; }
+  .gps-form { display:grid; gap:8px; margin-top:9px; }
+  .gps-form label { display:grid; gap:4px; color:var(--muted); font-size:.68rem; font-weight:800; }
+  .gps-form input { min-height:38px; width:100%; border:1px solid var(--line); border-radius:10px; background:var(--surface-2); color:var(--text); padding:0 10px; }
+  .gps-note { margin-top:9px; color:var(--muted); font-size:.68rem; line-height:1.45; }
+  .gps-status { min-height:18px; margin-top:8px; font-size:.7rem; font-weight:800; color:var(--accent); }
+  .gps-status.error { color:var(--danger); }
+  .gps-track-badge { display:inline-flex; align-items:center; gap:5px; margin-top:4px; color:var(--muted); font-size:.68rem; }
+  .gps-track-badge::before { content:""; width:7px; height:7px; border-radius:50%; background:#64748b; }
+  .gps-track-badge.live::before { background:#ef5a7d; box-shadow:0 0 10px rgba(239,90,125,.7); }
+  .gps-accuracy-warning { color:#b45309; }
+  body.dark .gps-accuracy-warning { color:#fbbf24; }
+  .gps-track-node { width:18px; height:18px; border-radius:50%; background:#ef5a7d; border:3px solid #fff; box-shadow:0 0 0 2px rgba(239,90,125,.24),0 4px 12px rgba(25,35,50,.28); }
+  @media (max-width: 640px) {
+    .gps-track-launch { width:46px; min-width:46px; height:46px; border-radius:13px; }
+    .gps-tracker-panel { top:max(126px, calc(env(safe-area-inset-top) + 118px)); right:max(8px, calc(env(safe-area-inset-right) + 8px)); width:min(350px, calc(100vw - 16px)); }
+  }
+  @media (max-width: 480px) {
+    .gps-tracker-panel { top:max(116px, calc(env(safe-area-inset-top) + 108px)); }
+    .gps-actions { grid-template-columns:1fr 1fr; }
+    .gps-actions .button:last-child { grid-column:1 / -1; }
+  }
+</style>
+
+
+<script id="gps-tracker-upgrade-script">
+(function(){
+  "use strict";
+
+  const GPS_DB_KEY = "travel-os-gps-config-v1";
+  const GPS_SESSION_KEY = "travel-os-gps-session-v1";
+  const GPS_TRACK_SOURCE = "live-gps-track-source";
+  const GPS_TRACK_LAYER = "live-gps-track-layer";
+  const GPS_POINT_SOURCE = "live-gps-point-source";
+  const GPS_POINT_LAYER = "live-gps-point-layer";
+
+  const gps = {
+    watchId: null,
+    recording: false,
+    paused: false,
+    points: [],
+    distanceM: 0,
+    startedAt: null,
+    elapsedBeforePause: 0,
+    pauseStartedAt: null,
+    lastAcceptedAt: 0,
+    marker: null,
+    panelOpen: false,
+    saving: false
+  };
+
+  function el(id){ return document.getElementById(id); }
+  function toast(msg){ try{ if(typeof showToast === "function") showToast(msg); else console.log(msg); }catch(e){ console.log(msg); } }
+  function currentDay(){
+    try{
+      const d = state && state.mapDay;
+      if(d !== undefined && d !== null && d !== "all" && Number.isFinite(Number(d))) return Number(d);
+    }catch(e){}
+    return 1;
+  }
+  function selectedTrackPath(){
+    const cfg = getConfig();
+    const day = currentDay();
+    const clean = String(cfg.path || "tracks").replace(/^\/+|\/+$/g,"");
+    return clean + "/D" + day + ".txt";
+  }
+  function getConfig(){
+    let saved={};
+    try{ saved=JSON.parse(localStorage.getItem(GPS_DB_KEY)||"{}"); }catch(e){}
+    let token="";
+    try{ token=sessionStorage.getItem(GPS_SESSION_KEY)||""; }catch(e){}
+    return {
+      owner:saved.owner||"",
+      repo:saved.repo||"",
+      path:saved.path||"tracks",
+      token:token
+    };
+  }
+  function setConfigFromInputs(){
+    const cfg={
+      owner:(el("gps-gh-owner")?.value||"").trim(),
+      repo:(el("gps-gh-repo")?.value||"").trim(),
+      path:(el("gps-gh-path")?.value||"tracks").trim()||"tracks"
+    };
+    try{ localStorage.setItem(GPS_DB_KEY,JSON.stringify(cfg)); }catch(e){}
+    const token=(el("gps-gh-token")?.value||"").trim();
+    if(token){ try{ sessionStorage.setItem(GPS_SESSION_KEY,token); }catch(e){} }
+    return Object.assign({},cfg,{token:token||getConfig().token});
+  }
+  function hydrateInputs(){
+    const cfg=getConfig();
+    if(el("gps-gh-owner")) el("gps-gh-owner").value=cfg.owner;
+    if(el("gps-gh-repo")) el("gps-gh-repo").value=cfg.repo;
+    if(el("gps-gh-path")) el("gps-gh-path").value=cfg.path;
+    if(el("gps-gh-token")) el("gps-gh-token").value="";
+  }
+  function setStatus(message,error){
+    const node=el("gps-track-status"); if(!node)return;
+    node.textContent=message;
+    node.classList.toggle("error",!!error);
+  }
+  function formatDuration(ms){
+    const sec=Math.max(0,Math.floor(ms/1000));
+    const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+    return [h,m,s].map(v=>String(v).padStart(2,"0")).join(":");
+  }
+  function effectiveElapsed(){
+    if(!gps.startedAt) return gps.elapsedBeforePause;
+    if(gps.recording && !gps.paused) return gps.elapsedBeforePause + (Date.now()-gps.startedAt);
+    return gps.elapsedBeforePause;
+  }
+  function haversine(a,b){
+    const R=6371008.8, p=Math.PI/180;
+    const dLat=(b.lat-a.lat)*p, dLng=(b.lng-a.lng)*p;
+    const x=Math.sin(dLat/2)**2 + Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLng/2)**2;
+    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  }
+  function updateUI(){
+    if(el("gps-stat-distance")) el("gps-stat-distance").textContent=(gps.distanceM/1000).toFixed(2)+" km";
+    if(el("gps-stat-duration")) el("gps-stat-duration").textContent=formatDuration(effectiveElapsed());
+    if(el("gps-stat-points")) el("gps-stat-points").textContent=String(gps.points.length);
+    const last=gps.points[gps.points.length-1];
+    if(el("gps-stat-accuracy")) el("gps-stat-accuracy").textContent=last&&Number.isFinite(last.accuracy)?Math.round(last.accuracy)+" m":"—";
+    const badge=el("gps-track-badge");
+    if(badge){ badge.classList.toggle("live",gps.recording&&!gps.paused); badge.textContent=gps.recording?(gps.paused?"Paused":"Recording"):"Ready"; }
+    const launch=el("gps-track-launch"); if(launch){ launch.classList.toggle("is-recording",gps.recording&&!gps.paused); }
+    const pauseBtn=document.querySelector('[data-action="gps-pause"]'); if(pauseBtn) pauseBtn.disabled=!gps.recording;
+    const saveBtn=document.querySelector('[data-action="gps-save"]'); if(saveBtn) saveBtn.disabled=gps.saving || !gps.points.length;
+  }
+  function openPanel(){
+    gps.panelOpen=true;
+    const panel=el("gps-tracker-panel"); if(panel) panel.hidden=false;
+    const btn=el("gps-track-launch"); if(btn) btn.setAttribute("aria-expanded","true");
+    hydrateInputs(); updateUI();
+  }
+  function closePanel(){
+    gps.panelOpen=false;
+    const panel=el("gps-tracker-panel"); if(panel) panel.hidden=true;
+    const btn=el("gps-track-launch"); if(btn) btn.setAttribute("aria-expanded","false");
+  }
+  function ensureLayers(){
+    if(typeof mlMap === "undefined" || !mlMap || !mapReady) return false;
+    if(!mlMap.getSource(GPS_TRACK_SOURCE)) mlMap.addSource(GPS_TRACK_SOURCE,{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:[]},properties:{}}});
+    if(!mlMap.getLayer(GPS_TRACK_LAYER)) mlMap.addLayer({id:GPS_TRACK_LAYER,type:"line",source:GPS_TRACK_SOURCE,layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#ef5a7d","line-width":5.5,"line-opacity":0.95,"line-blur":0.2}});
+    if(!mlMap.getSource(GPS_POINT_SOURCE)) mlMap.addSource(GPS_POINT_SOURCE,{type:"geojson",data:{type:"FeatureCollection",features:[]}});
+    if(!mlMap.getLayer(GPS_POINT_LAYER)) mlMap.addLayer({id:GPS_POINT_LAYER,type:"circle",source:GPS_POINT_SOURCE,paint:{"circle-radius":6,"circle-color":"#ef5a7d","circle-stroke-width":3,"circle-stroke-color":"#ffffff","circle-opacity":0.98}});
+    return true;
+  }
+  function renderTrack(){
+    if(!ensureLayers()) return;
+    const coords=gps.points.map(p=>[p.lng,p.lat]);
+    const lineSource=mlMap.getSource(GPS_TRACK_SOURCE);
+    if(lineSource) lineSource.setData({type:"Feature",geometry:{type:"LineString",coordinates:coords.length>=2?coords:[]},properties:{points:gps.points.length}});
+    const last=gps.points[gps.points.length-1];
+    const pointSource=mlMap.getSource(GPS_POINT_SOURCE);
+    if(pointSource) pointSource.setData({type:"FeatureCollection",features:last?[{type:"Feature",geometry:{type:"Point",coordinates:[last.lng,last.lat]},properties:{accuracy:last.accuracy||0}}]:[]});
+  }
+  function moveToLatest(zoom){
+    const last=gps.points[gps.points.length-1];
+    if(!last || typeof mlMap === "undefined" || !mlMap) return;
+    try{ mlMap.easeTo({center:[last.lng,last.lat],zoom:Number(zoom||15),duration:450,essential:true}); }catch(e){}
+  }
+  function stopWatcher(){
+    if(gps.watchId!==null && navigator.geolocation){ try{navigator.geolocation.clearWatch(gps.watchId);}catch(e){} }
+    gps.watchId=null;
+  }
+  function addGpsPosition(position){
+    if(!gps.recording || gps.paused) return;
+    const c=position.coords || {};
+    const lat=Number(c.latitude), lng=Number(c.longitude), accuracy=Number(c.accuracy);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)) return;
+    const now=Date.now();
+    if(!Number.isFinite(accuracy) || accuracy>100){ setStatus("GPS accuracy is too low. Waiting for a better fix.",true); return; }
+    const point={ts:new Date(now).toISOString(),lat:lat,lng:lng,accuracy:accuracy,speed:Number.isFinite(Number(c.speed))?Number(c.speed):null,altitude:Number.isFinite(Number(c.altitude))?Number(c.altitude):null};
+    const prev=gps.points[gps.points.length-1];
+    if(prev){
+      const delta=haversine(prev,point);
+      const dt=Math.max(0.1,(now-(gps.lastAcceptedAt||now))/1000);
+      if(delta<3 && dt<5) return;
+      if(delta>250 && dt<10){ setStatus("GPS jump ignored while signal settles.",true); return; }
+      gps.distanceM+=delta;
+    }
+    gps.points.push(point); gps.lastAcceptedAt=now;
+    renderTrack(); updateUI();
+    setStatus((accuracy<=20?"GPS locked":"GPS acquired")+" · "+Math.round(accuracy)+" m accuracy");
+  }
+  function startTracking(){
+    if(!navigator.geolocation){ setStatus("This browser does not support GPS geolocation.",true); return; }
+    if(window.isSecureContext!==true){ setStatus("GPS requires HTTPS (or localhost) in this browser.",true); toast("Open the site over HTTPS to use GPS tracking."); return; }
+    if(gps.recording && !gps.paused) return;
+    if(gps.paused){ gps.recording=true; gps.paused=false; gps.startedAt=Date.now(); gps.pauseStartedAt=null; setStatus("GPS tracking resumed."); updateUI(); return; }
+    gps.recording=true; gps.paused=false; gps.points=[]; gps.distanceM=0; gps.startedAt=Date.now(); gps.elapsedBeforePause=0; gps.pauseStartedAt=null; gps.lastAcceptedAt=0;
+    renderTrack(); updateUI(); setStatus("Requesting GPS permission…");
+    stopWatcher();
+    gps.watchId=navigator.geolocation.watchPosition(addGpsPosition,function(error){
+      let msg="Unable to read GPS.";
+      if(error&&error.code===1) msg="GPS permission was denied.";
+      else if(error&&error.code===2) msg="GPS position is unavailable.";
+      else if(error&&error.code===3) msg="GPS request timed out. Still trying…";
+      setStatus(msg,true); updateUI();
+    },{enableHighAccuracy:true,maximumAge:3000,timeout:15000});
+    try{ sessionStorage.setItem("travel-os-gps-last-day",String(currentDay())); }catch(e){}
+  }
+  function pauseTracking(){
+    if(!gps.recording) return;
+    if(gps.paused){ startTracking(); return; }
+    gps.elapsedBeforePause=effectiveElapsed(); gps.paused=true; gps.pauseStartedAt=Date.now();
+    setStatus("Tracking paused."); updateUI();
+  }
+  function stopTracking(){
+    if(!gps.recording) return;
+    gps.elapsedBeforePause=effectiveElapsed();
+    stopWatcher();
+    gps.recording=false;
+    gps.paused=false;
+    gps.startedAt=null;
+    gps.pauseStartedAt=null;
+    setStatus(gps.points.length ? "Tracking stopped. Route is ready to save." : "GPS stopped.");
+    updateUI();
+  }
+  function resetTracking(){
+    stopWatcher();
+    gps.recording=false; gps.paused=false; gps.points=[]; gps.distanceM=0; gps.startedAt=null; gps.elapsedBeforePause=0; gps.pauseStartedAt=null; gps.lastAcceptedAt=0;
+    renderTrack(); updateUI(); setStatus("GPS is idle.");
+  }
+  function trackText(day){
+    const head=[
+      "# Travel GPS Track",
+      "# day: D"+day,
+      "# recorded_at: "+new Date().toISOString(),
+      "# columns: timestamp,lat,lng,accuracy_m,speed_mps,altitude_m"
+    ];
+    const rows=gps.points.map(p=>[
+      p.ts,
+      p.lat.toFixed(7),
+      p.lng.toFixed(7),
+      Number.isFinite(p.accuracy)?p.accuracy.toFixed(1):"",
+      Number.isFinite(p.speed)?p.speed.toFixed(2):"",
+      Number.isFinite(p.altitude)?p.altitude.toFixed(1):""
+    ].join(","));
+    return head.concat(rows).join("\n")+"\n";
+  }
+  function bytesToBase64(text){
+    const bytes=new TextEncoder().encode(text); let binary=""; const chunk=0x8000;
+    for(let i=0;i<bytes.length;i+=chunk) binary+=String.fromCharCode.apply(null,bytes.subarray(i,Math.min(i+chunk,bytes.length)));
+    return btoa(binary);
+  }
+  function base64ToUtf8(base64){
+    const clean=String(base64||"").replace(/\n/g,""); const bin=atob(clean); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return new TextDecoder().decode(bytes);
+  }
+  async function githubRequest(url,options){
+    const cfg=getConfig();
+    const headers=Object.assign({"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"},options&&options.headers||{});
+    if(cfg.token) headers.Authorization="Bearer "+cfg.token;
+    const res=await fetch(url,Object.assign({},options,{headers:headers}));
+    const text=await res.text(); let data={}; try{data=text?JSON.parse(text):{};}catch(e){data={message:text};}
+    if(!res.ok){ const err=new Error((data&&data.message)||("GitHub HTTP "+res.status)); err.status=res.status; throw err; }
+    return data;
+  }
+  async function saveToGithub(){
+    if(gps.saving) return;
+    if(!gps.points.length){ toast("No GPS points to save yet."); return; }
+    const cfg=setConfigFromInputs();
+    if(!cfg.owner||!cfg.repo||!cfg.token){ openPanel(); setStatus("Enter GitHub owner, repository, and token first.",true); toast("GitHub settings are incomplete."); return; }
+    gps.saving=true; updateUI(); setStatus("Saving route to GitHub…");
+    const day=currentDay(); const path=selectedTrackPath();
+    const url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo)+"/contents/"+path.split("/").map(encodeURIComponent).join("/");
+    try{
+      let existing="",sha=null;
+      try{ const found=await githubRequest(url,{method:"GET"}); sha=found.sha||null; existing=found.content?base64ToUtf8(found.content):""; }catch(e){ if(e.status!==404) throw e; }
+      const content=existing ? existing.replace(/\s+$/g,"")+"\n"+trackText(day) : trackText(day);
+      const body={message:"Update GPS track D"+day,content:bytesToBase64(content)};
+      if(sha) body.sha=sha;
+      const result=await githubRequest(url,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+      setStatus("Saved to GitHub: "+path);
+      toast("GPS route saved to GitHub ✅");
+      try{ localStorage.setItem("travel-os-last-github-track",JSON.stringify({path:path,commit:result.commit&&result.commit.sha||"",savedAt:new Date().toISOString()})); }catch(e){}
+    }catch(error){
+      console.error("[GPS Tracker] GitHub save failed",error);
+      setStatus("GitHub save failed: "+String(error.message||error),true);
+      toast("Could not save the route to GitHub.");
+    }finally{ gps.saving=false; updateUI(); }
+  }
+  function init(){
+    hydrateInputs(); updateUI();
+    document.addEventListener("click",function(event){
+      const control=event.target.closest&&event.target.closest("[data-action]"); if(!control) return;
+      const action=control.getAttribute("data-action");
+      if(action==="gps-toggle-panel"){ event.preventDefault(); gps.panelOpen?closePanel():openPanel(); return; }
+      if(action==="gps-close-panel"){ event.preventDefault(); closePanel(); return; }
+      if(action==="gps-start"){ event.preventDefault(); startTracking(); return; }
+      if(action==="gps-pause"){ event.preventDefault(); pauseTracking(); return; }
+      if(action==="gps-stop"){ event.preventDefault(); stopTracking(); return; }
+      if(action==="gps-save"){ event.preventDefault(); saveToGithub(); return; }
+      if(action==="gps-locate"){ event.preventDefault(); if(!gps.points.length){setStatus("Start tracking first so the map has a live GPS point.",true);}else moveToLatest(16); return; }
+      if(action==="gps-clear"){ event.preventDefault(); if(gps.recording){toast("Pause or stop tracking before resetting.");return;} resetTracking(); return; }
+      if(action==="gps-save-settings"){ event.preventDefault(); setConfigFromInputs(); setStatus("GitHub settings saved locally."); toast("GitHub settings saved on this device."); return; }
+    },true);
+    setInterval(function(){ if(gps.recording) updateUI(); },1000);
+    window.addEventListener("beforeunload",function(){ if(gps.watchId!==null) stopWatcher(); });
+    const observer=new MutationObserver(function(){ if(typeof mlMap!=="undefined"&&mlMap&&typeof mapReady!=="undefined"&&mapReady) { try{ensureLayers();renderTrack();}catch(e){} } });
+    const stage=el("map-stage"); if(stage) observer.observe(stage,{childList:true,subtree:true});
+    const waitForMap=setInterval(function(){
+      try{
+        if(typeof mlMap!=="undefined"&&mlMap&&typeof mapReady!=="undefined"&&mapReady){ ensureLayers(); renderTrack(); clearInterval(waitForMap); }
+      }catch(e){}
+    },500);
+    setTimeout(function(){clearInterval(waitForMap);},30000);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",init,{once:true}); else init();
+})();
+</script>
 
 <script id="mobile-responsive-final-patch-script">
 (function () {
