@@ -5630,5 +5630,1127 @@ fileName: t.attachmentFileName
 })();
 </script>
 
+<!-- MOBILE RESPONSIVE LAYER: additive only; keeps the desktop map and existing itinerary logic intact. -->
+<style id="mobile-responsive-layer">
+  :root { --mobile-app-height: 100dvh; }
+
+  #mobile-stops-sheet { display: none; }
+
+  @media (max-width: 768px) {
+    html,
+    body {
+      width: 100%;
+      max-width: 100%;
+      height: var(--mobile-app-height, 100dvh) !important;
+      min-height: var(--mobile-app-height, 100dvh) !important;
+      overflow: hidden !important;
+      overscroll-behavior: none;
+    }
+
+    body > .app-shell,
+    .workspace,
+    .workspace.map-mode,
+    .workspace.places-mode,
+    .map-pane,
+    .map-panel,
+    .map-stage,
+    #offline-map {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: var(--mobile-app-height, 100dvh) !important;
+      min-height: var(--mobile-app-height, 100dvh) !important;
+    }
+
+    /* Keep the map as the primary view while respecting mobile browser chrome and notches. */
+    body > .app-shell {
+      inset: 0 !important;
+      padding: 0 !important;
+    }
+
+    #map-stage,
+    #offline-map {
+      touch-action: none;
+    }
+
+    .full-map-day-filter {
+      top: 10px !important;
+      top: max(10px, calc(env(safe-area-inset-top) + 8px)) !important;
+      left: 10px !important;
+      left: max(10px, calc(env(safe-area-inset-left) + 8px)) !important;
+      right: 10px !important;
+      right: max(10px, calc(env(safe-area-inset-right) + 8px)) !important;
+      width: auto !important;
+      max-width: none !important;
+      min-height: 48px;
+      padding: 5px !important;
+      gap: 5px !important;
+      border-radius: 14px !important;
+    }
+
+    .full-map-day-toggle {
+      min-width: 78px;
+      height: 38px;
+      padding: 0 10px;
+      font-size: .68rem;
+    }
+
+    .full-map-day-body {
+      min-width: 0;
+      max-width: calc(100% - 84px) !important;
+      flex: 1 1 auto;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .full-map-day-body::-webkit-scrollbar { display: none; }
+
+    .full-map-day-label { display: none !important; }
+
+    .full-map-day-btn {
+      min-width: 44px !important;
+      height: 38px !important;
+      padding: 0 11px !important;
+      border-radius: 10px !important;
+      font-size: .72rem !important;
+      scroll-snap-align: start;
+    }
+
+    .full-map-day-filter.collapsed .full-map-day-body {
+      flex: 0 0 0;
+      max-width: 0 !important;
+    }
+
+    .maplibregl-ctrl-top-right { display: none !important; }
+
+    .map-controls {
+      right: 12px !important;
+      right: max(12px, calc(env(safe-area-inset-right) + 10px)) !important;
+      bottom: 12px !important;
+      bottom: max(12px, calc(env(safe-area-inset-bottom) + 10px)) !important;
+      gap: 8px !important;
+    }
+
+    .map-controls .button {
+      min-width: 46px !important;
+      min-height: 46px !important;
+      padding: 6px 10px !important;
+      border-radius: 13px !important;
+      font-size: .74rem !important;
+      font-weight: 850 !important;
+    }
+
+    .map-legend {
+      left: 10px !important;
+      left: max(10px, calc(env(safe-area-inset-left) + 8px)) !important;
+      bottom: 72px !important;
+      bottom: max(72px, calc(env(safe-area-inset-bottom) + 62px)) !important;
+      max-width: min(192px, calc(100vw - 96px)) !important;
+      padding: 7px 9px !important;
+      font-size: .62rem !important;
+      line-height: 1.62 !important;
+    }
+
+    .offline-map-marker {
+      width: 46px !important;
+      height: 46px !important;
+    }
+
+    .offline-map-marker-core {
+      width: 34px !important;
+      height: 34px !important;
+      border-width: 3px !important;
+      font-size: 13px !important;
+    }
+
+    .offline-map-marker-label {
+      left: 38px !important;
+      top: -9px !important;
+      max-width: min(150px, calc(100vw - 92px)) !important;
+      font-size: 10px !important;
+    }
+
+    .maplibregl-popup {
+      max-width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 20px) !important;
+    }
+
+    .maplibregl-popup-content {
+      width: min(320px, calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 20px)) !important;
+      max-width: min(320px, calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 20px)) !important;
+      max-height: min(50dvh, 410px) !important;
+      overflow: auto !important;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .maplibregl-popup-close-button {
+      width: 42px !important;
+      height: 42px !important;
+      padding: 0 !important;
+      font-size: 24px !important;
+      line-height: 42px !important;
+      color: var(--text) !important;
+    }
+
+    .offline-location-popup {
+      width: 100% !important;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .offline-location-popup .olp-grid { grid-template-columns: 1fr !important; }
+    .offline-location-popup .olp-actions button,
+    .offline-location-popup .olp-actions a {
+      min-height: 40px !important;
+      padding: 7px 10px !important;
+      font-size: .72rem !important;
+    }
+
+    #mobile-stops-sheet {
+      position: fixed;
+      z-index: 72;
+      left: 10px;
+      left: max(10px, calc(env(safe-area-inset-left) + 8px));
+      right: 72px;
+      right: max(72px, calc(env(safe-area-inset-right) + 62px));
+      bottom: 10px;
+      bottom: max(10px, calc(env(safe-area-inset-bottom) + 8px));
+      display: block;
+      max-width: calc(100vw - 92px);
+      pointer-events: none;
+    }
+
+    .mobile-stops-sheet__surface {
+      pointer-events: auto;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+      border-radius: 15px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      box-shadow: 0 12px 30px rgba(20, 30, 50, .18);
+      backdrop-filter: blur(14px);
+    }
+
+    .mobile-stops-sheet__toggle {
+      width: 100%;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 9px 12px;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      font-size: .8rem;
+      font-weight: 850;
+      text-align: left;
+    }
+
+    .mobile-stops-sheet__toggle span {
+      color: var(--muted);
+      font-size: .68rem;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .mobile-stops-sheet__panel {
+      max-height: min(44dvh, 400px);
+      overflow: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      border-top: 1px solid var(--line);
+    }
+
+    .mobile-stops-sheet__list {
+      display: grid;
+      gap: 7px;
+      padding: 9px;
+    }
+
+    .mobile-stop-card {
+      width: 100%;
+      min-height: 58px;
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      align-items: center;
+      gap: 9px;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--text);
+      text-align: left;
+    }
+
+    .mobile-stop-card.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+
+    .mobile-stop-card__sequence {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: .74rem;
+      font-weight: 900;
+    }
+
+    .mobile-stop-card__copy { min-width: 0; }
+    .mobile-stop-card__copy strong,
+    .mobile-stop-card__copy span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .mobile-stop-card__copy strong { font-size: .79rem; }
+    .mobile-stop-card__copy span { margin-top: 2px; color: var(--muted); font-size: .68rem; }
+
+    body.mobile-stops-open .map-legend {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .full-map-day-btn:active,
+    .full-map-day-toggle:active,
+    .map-controls .button:active,
+    .mobile-stops-sheet__toggle:active,
+    .mobile-stop-card:active {
+      transform: scale(.97);
+    }
+
+    .full-map-day-btn:disabled,
+    .full-map-day-toggle:disabled,
+    .map-controls .button:disabled,
+    .mobile-stops-sheet__toggle:disabled,
+    .mobile-stop-card:disabled,
+    [aria-disabled="true"] {
+      opacity: .48;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+  }
+
+  @media (hover: hover) and (max-width: 768px) {
+    .full-map-day-btn:hover,
+    .full-map-day-toggle:hover,
+    .map-controls .button:hover,
+    .mobile-stops-sheet__toggle:hover,
+    .mobile-stop-card:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  }
+
+  @media (max-width: 768px) and (orientation: landscape) and (max-height: 520px) {
+    .full-map-day-filter {
+      top: 6px !important;
+      top: max(6px, calc(env(safe-area-inset-top) + 4px)) !important;
+      min-height: 42px;
+    }
+    .full-map-day-toggle,
+    .full-map-day-btn { height: 32px !important; min-height: 32px !important; }
+    .full-map-day-toggle { min-width: 70px; }
+    .map-legend { display: none !important; }
+    .mobile-stops-sheet__toggle { min-height: 42px; }
+    .mobile-stops-sheet__panel { max-height: min(54dvh, 260px); }
+    .maplibregl-popup-content { max-height: min(62dvh, 290px) !important; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .full-map-day-btn,
+    .full-map-day-toggle,
+    .mobile-stops-sheet__toggle,
+    .mobile-stop-card { transition: none !important; }
+  }
+</style>
+
+<script id="mobile-responsive-ux">
+(function () {
+  "use strict";
+
+  var mobileQuery = window.matchMedia("(max-width: 768px)");
+  var sheetOpen = false;
+  var resizeTimer = 0;
+
+  function isMobileViewport() {
+    return mobileQuery.matches;
+  }
+
+  function visibleMobileStops() {
+    var day = state.mapDay;
+    var query = normalizeText(state.mapSearchQuery || "");
+    return allActivities().filter(function (activity) {
+      if (!getActivityCoordinates(activity)) return false;
+      if (day !== "all" && Number(activity.day) !== Number(day)) return false;
+      if (!query) return true;
+      var searchable = [activity.title, activity.location, activity.city, activity.country, activity.description, activity.notes, (activity.tags || []).join(" ")].join(" ");
+      return normalizeText(searchable).indexOf(query) !== -1;
+    });
+  }
+
+  function syncFloatingDayButtons() {
+    var selected = String(state.mapDay);
+    document.querySelectorAll(".full-map-day-btn[data-day]").forEach(function (button) {
+      var active = String(button.getAttribute("data-day")) === selected;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+  }
+
+  function sheetTitle() {
+    return state.mapDay === "all" ? "All trip stops" : "Day " + state.mapDay + " stops";
+  }
+
+  function stopMeta(activity) {
+    var transport = activity.transport || {};
+    var parts = [activity.start || "Time TBD", activity.category || activity.type || "Activity"];
+    if (transport.mode) parts.push(transport.mode + (transport.duration ? " · " + formatMinutes(transport.duration) : ""));
+    return parts.join(" · ");
+  }
+
+  function renderMobileStopsSheet() {
+    var host = document.getElementById("mobile-stops-sheet");
+    if (!isMobileViewport()) {
+      if (host) host.hidden = true;
+      document.body.classList.remove("mobile-stops-open");
+      return;
+    }
+
+    if (!host) {
+      host = document.createElement("aside");
+      host.id = "mobile-stops-sheet";
+      host.setAttribute("aria-label", "Mobile itinerary stops");
+      document.body.appendChild(host);
+      host.addEventListener("click", handleSheetClick);
+    }
+
+    host.hidden = false;
+    var stops = visibleMobileStops();
+    var selectedId = state.selectedActivityId || mapState.selectedActivityId;
+    var cards = sheetOpen ? stops.map(function (activity) {
+      var active = String(activity.id) === String(selectedId);
+      return '<button class="mobile-stop-card' + (active ? ' active' : '') + '" type="button" data-mobile-stop="' + escapeHtml(activity.id) + '" aria-pressed="' + String(active) + '">' +
+        '<span class="mobile-stop-card__sequence">' + escapeHtml(activity.sequence || "•") + '</span>' +
+        '<span class="mobile-stop-card__copy"><strong>' + escapeHtml(activityLabel(activity)) + '</strong><span>' + escapeHtml(stopMeta(activity)) + '</span></span>' +
+      '</button>';
+    }).join("") : "";
+
+    host.innerHTML = '<div class="mobile-stops-sheet__surface">' +
+      '<button class="mobile-stops-sheet__toggle" type="button" data-mobile-stops-toggle aria-expanded="' + String(sheetOpen) + '" aria-controls="mobile-stops-panel">' +
+        '<span>' + (sheetOpen ? '⌄ ' : '⌃ ') + escapeHtml(sheetTitle()) + '</span><span>' + stops.length + ' stop' + (stops.length === 1 ? '' : 's') + '</span>' +
+      '</button>' +
+      '<div id="mobile-stops-panel" class="mobile-stops-sheet__panel"' + (sheetOpen ? '' : ' hidden') + '>' +
+        '<div class="mobile-stops-sheet__list">' + (cards || '<div class="empty">No stops match this day or search.</div>') + '</div>' +
+      '</div>' +
+    '</div>';
+    document.body.classList.toggle("mobile-stops-open", sheetOpen);
+  }
+
+  function focusMobileStop(id) {
+    var activity = getActivityById(id);
+    if (!activity) return;
+    state.mapDay = Number(activity.day);
+    state.selectedDay = Number(activity.day);
+    state.activeView = "map";
+    state.overview = false;
+    state.selectedActivityId = activity.id;
+    mapState.selectedActivityId = activity.id;
+    mapState.selectedRoute = null;
+
+    var stops = visibleMobileStops();
+    runtime.visibleMapActivities = stops.slice();
+    syncFloatingDayButtons();
+    if (typeof renderOfflineMap === "function") renderOfflineMap(stops);
+    sheetOpen = false;
+    renderMobileStopsSheet();
+    requestAnimationFrame(function () {
+      if (typeof centerMapOnActivity === "function") centerMapOnActivity(activity, 12);
+      resizeMobileMap();
+    });
+  }
+
+  function handleSheetClick(event) {
+    var toggle = event.target.closest("[data-mobile-stops-toggle]");
+    if (toggle) {
+      event.preventDefault();
+      sheetOpen = !sheetOpen;
+      renderMobileStopsSheet();
+      return;
+    }
+    var stop = event.target.closest("[data-mobile-stop]");
+    if (stop) {
+      event.preventDefault();
+      focusMobileStop(stop.getAttribute("data-mobile-stop"));
+    }
+  }
+
+  function resizeMobileMap() {
+    if (!isMobileViewport()) return;
+    try {
+      if (typeof mlMap !== "undefined" && mlMap && typeof mlMap.resize === "function") mlMap.resize();
+    } catch (error) {
+      console.debug("[Mobile UX] Map resize skipped:", error);
+    }
+  }
+
+  function updateMobileViewport() {
+    if (!isMobileViewport()) {
+      sheetOpen = false;
+      renderMobileStopsSheet();
+      return;
+    }
+    var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty("--mobile-app-height", Math.round(viewportHeight) + "px");
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(function () {
+      resizeMobileMap();
+      renderMobileStopsSheet();
+    }, 90);
+  }
+
+  document.addEventListener("click", function (event) {
+    if (!isMobileViewport()) return;
+    var control = event.target.closest && event.target.closest('[data-action="map-select-day"], [data-action="map-marker"]');
+    if (control) requestAnimationFrame(renderMobileStopsSheet);
+  }, true);
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && sheetOpen && isMobileViewport()) {
+      sheetOpen = false;
+      renderMobileStopsSheet();
+    }
+  });
+
+  window.addEventListener("resize", updateMobileViewport, { passive: true });
+  window.addEventListener("orientationchange", updateMobileViewport, { passive: true });
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", updateMobileViewport, { passive: true });
+  if (mobileQuery.addEventListener) mobileQuery.addEventListener("change", updateMobileViewport);
+  else if (mobileQuery.addListener) mobileQuery.addListener(updateMobileViewport);
+
+  updateMobileViewport();
+})();
+</script>
+
+
+<!-- MOBILE RESPONSIVE FINAL PATCH: additive only; preserves existing HTML/CSS/JS/data. -->
+<style id="mobile-responsive-final-patch">
+  @media (max-width: 768px) {
+    :root {
+      --mobile-safe-top: max(8px, env(safe-area-inset-top));
+      --mobile-safe-right: max(8px, env(safe-area-inset-right));
+      --mobile-safe-bottom: max(8px, env(safe-area-inset-bottom));
+      --mobile-safe-left: max(8px, env(safe-area-inset-left));
+      --mobile-control-gap: 8px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      max-width: 100%;
+      min-width: 320px;
+      height: var(--mobile-app-height, 100dvh) !important;
+      min-height: var(--mobile-app-height, 100dvh) !important;
+      max-height: var(--mobile-app-height, 100dvh) !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      overscroll-behavior: none !important;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body > .app-shell,
+    .workspace,
+    .map-pane,
+    .map-panel,
+    #map-stage,
+    #offline-map {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    body > .app-shell {
+      height: var(--mobile-app-height, 100dvh) !important;
+      min-height: var(--mobile-app-height, 100dvh) !important;
+      max-height: var(--mobile-app-height, 100dvh) !important;
+    }
+
+    .workspace,
+    .map-pane,
+    .map-panel,
+    #map-stage,
+    #offline-map {
+      height: 100% !important;
+      min-height: 0 !important;
+      max-height: 100% !important;
+    }
+
+    #map-stage,
+    #offline-map,
+    #offline-map .maplibregl-canvas-container,
+    #offline-map .maplibregl-canvas {
+      touch-action: none !important;
+    }
+
+    /* Day selector: always scroll horizontally instead of wrapping off-screen. */
+    #full-map-day-filter.full-map-day-filter {
+      top: var(--mobile-safe-top) !important;
+      left: var(--mobile-safe-left) !important;
+      right: var(--mobile-safe-right) !important;
+      width: auto !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      padding: 5px !important;
+      border-radius: 14px !important;
+      overflow: hidden !important;
+      z-index: 100 !important;
+    }
+
+    #full-map-day-filter .full-map-day-toggle {
+      flex: 0 0 auto !important;
+      min-width: 72px !important;
+      min-height: 42px !important;
+      height: 42px !important;
+      padding: 0 10px !important;
+      border-radius: 11px !important;
+      font-size: .68rem !important;
+      touch-action: manipulation !important;
+    }
+
+    #full-map-day-filter .full-map-day-body {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+      scroll-snap-type: x proximity;
+      overscroll-behavior-x: contain;
+    }
+
+    #full-map-day-filter .full-map-day-body::-webkit-scrollbar {
+      display: none;
+    }
+
+    #full-map-day-filter .full-map-day-btn {
+      flex: 0 0 auto !important;
+      min-width: 46px !important;
+      min-height: 42px !important;
+      height: 42px !important;
+      padding: 0 11px !important;
+      border-radius: 10px !important;
+      font-size: .7rem !important;
+      touch-action: manipulation !important;
+      scroll-snap-align: start;
+    }
+
+    #full-map-day-filter.collapsed {
+      right: auto !important;
+    }
+
+    #full-map-day-filter.collapsed .full-map-day-body {
+      display: none !important;
+    }
+
+    /* Map controls stay reachable and do not collide with the bottom stop sheet. */
+    .map-controls {
+      top: auto !important;
+      right: var(--mobile-safe-right) !important;
+      bottom: calc(var(--mobile-safe-bottom) + 8px) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: var(--mobile-control-gap) !important;
+      z-index: 80 !important;
+      pointer-events: auto !important;
+    }
+
+    .map-controls .button {
+      width: 46px !important;
+      min-width: 46px !important;
+      height: 46px !important;
+      min-height: 46px !important;
+      padding: 0 8px !important;
+      border-radius: 13px !important;
+      font-size: .72rem !important;
+      touch-action: manipulation !important;
+    }
+
+    /* Labels/legend remain useful but never dominate the map. */
+    .map-legend {
+      left: var(--mobile-safe-left) !important;
+      right: auto !important;
+      bottom: calc(var(--mobile-safe-bottom) + 8px) !important;
+      max-width: min(178px, calc(100vw - 104px)) !important;
+      padding: 7px 8px !important;
+      border-radius: 10px !important;
+      font-size: .60rem !important;
+      line-height: 1.55 !important;
+      z-index: 55 !important;
+    }
+
+    body.mobile-stops-open .map-legend {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    /* Marker hit areas are deliberately larger than the visible marker. */
+    .offline-map-marker {
+      width: 52px !important;
+      height: 52px !important;
+      display: grid !important;
+      place-items: center !important;
+      touch-action: manipulation !important;
+    }
+
+    .offline-map-marker-core {
+      width: 36px !important;
+      height: 36px !important;
+      min-width: 36px !important;
+      min-height: 36px !important;
+      border-width: 3px !important;
+      font-size: 13px !important;
+    }
+
+    .offline-map-marker-label {
+      left: 39px !important;
+      top: -7px !important;
+      width: max-content !important;
+      max-width: min(154px, calc(100vw - 96px)) !important;
+      min-width: 0 !important;
+      padding: 4px 7px !important;
+      border-radius: 8px !important;
+      font-size: 10px !important;
+      line-height: 1.15 !important;
+      white-space: normal !important;
+      overflow-wrap: anywhere !important;
+      pointer-events: none !important;
+    }
+
+    /* Route remains visually dominant over basemap. */
+    .route-line {
+      stroke-width: 5.5 !important;
+    }
+
+    .route-line.selected {
+      stroke-width: 8 !important;
+    }
+
+    .route-label {
+      font-size: 9.5px !important;
+      stroke-width: 4.5px !important;
+    }
+
+    /* Floating cards stay inside the viewport and above the day/stop UI. */
+    #map-route-card {
+      left: var(--mobile-safe-left) !important;
+      right: var(--mobile-safe-right) !important;
+      top: calc(var(--mobile-safe-top) + 58px) !important;
+      width: auto !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      max-height: min(34dvh, 290px) !important;
+      overflow: auto !important;
+      overscroll-behavior: contain !important;
+      z-index: 65 !important;
+    }
+
+    #map-preview {
+      left: var(--mobile-safe-left) !important;
+      right: var(--mobile-safe-right) !important;
+      bottom: calc(var(--mobile-safe-bottom) + 76px) !important;
+      width: auto !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      max-height: min(32dvh, 270px) !important;
+      overflow: auto !important;
+      overscroll-behavior: contain !important;
+      z-index: 66 !important;
+    }
+
+    #map-preview .preview-head,
+    #map-preview .preview-actions {
+      min-width: 0;
+    }
+
+    #map-preview h3,
+    #map-preview p,
+    #map-preview .preview-desc {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    #layer-popover {
+      top: calc(var(--mobile-safe-top) + 58px) !important;
+      right: var(--mobile-safe-right) !important;
+      width: min(220px, calc(100vw - 24px)) !important;
+      max-width: calc(100vw - 24px) !important;
+      max-height: min(48dvh, 360px) !important;
+      overflow: auto !important;
+      overscroll-behavior: contain !important;
+      z-index: 90 !important;
+    }
+
+    /* Native/MapLibre popup: readable and fully tappable. */
+    .maplibregl-popup {
+      z-index: 120 !important;
+      max-width: calc(100vw - var(--mobile-safe-left) - var(--mobile-safe-right) - 16px) !important;
+    }
+
+    .maplibregl-popup-content {
+      width: min(320px, calc(100vw - var(--mobile-safe-left) - var(--mobile-safe-right) - 16px)) !important;
+      max-width: min(320px, calc(100vw - var(--mobile-safe-left) - var(--mobile-safe-right) - 16px)) !important;
+      max-height: min(50dvh, 420px) !important;
+      overflow: auto !important;
+      overscroll-behavior: contain !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+
+    .maplibregl-popup-close-button {
+      width: 44px !important;
+      height: 44px !important;
+      padding: 0 !important;
+      font-size: 24px !important;
+      line-height: 44px !important;
+      touch-action: manipulation !important;
+    }
+
+    .offline-location-popup,
+    .offline-popup {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      overflow-wrap: anywhere !important;
+      word-break: break-word !important;
+    }
+
+    .offline-location-popup .olp-actions button,
+    .offline-location-popup .olp-actions a,
+    .offline-popup .popup-actions button,
+    .offline-popup .popup-actions a {
+      min-height: 42px !important;
+      padding: 8px 10px !important;
+      font-size: .72rem !important;
+      touch-action: manipulation !important;
+    }
+
+    /* Mobile stop sheet: compact when closed, usable scroll area when open. */
+    #mobile-stops-sheet {
+      left: var(--mobile-safe-left) !important;
+      right: calc(var(--mobile-safe-right) + 62px) !important;
+      bottom: var(--mobile-safe-bottom) !important;
+      width: auto !important;
+      max-width: none !important;
+      z-index: 75 !important;
+    }
+
+    #mobile-stops-sheet .mobile-stops-sheet__surface {
+      max-width: 100% !important;
+      border-radius: 15px !important;
+    }
+
+    #mobile-stops-sheet .mobile-stops-sheet__toggle {
+      min-height: 48px !important;
+      padding: 9px 12px !important;
+      touch-action: manipulation !important;
+    }
+
+    #mobile-stops-sheet .mobile-stops-sheet__panel {
+      max-height: min(48dvh, 380px) !important;
+      overscroll-behavior: contain !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+
+    #mobile-stops-sheet .mobile-stop-card {
+      min-height: 60px !important;
+      grid-template-columns: 36px minmax(0, 1fr) !important;
+      padding: 10px !important;
+      touch-action: manipulation !important;
+    }
+
+    #mobile-stops-sheet .mobile-stop-card__sequence {
+      width: 34px !important;
+      height: 34px !important;
+    }
+
+    #mobile-stops-sheet .mobile-stop-card__copy strong {
+      font-size: .80rem !important;
+    }
+
+    #mobile-stops-sheet .mobile-stop-card__copy span {
+      font-size: .69rem !important;
+    }
+
+    /* Safe-area-aware toast. */
+    #toast {
+      bottom: calc(var(--mobile-safe-bottom) + 10px) !important;
+      max-width: calc(100vw - 28px) !important;
+    }
+
+    /* Disable desktop hover movement on touch-only devices. */
+    @media (hover: none) {
+      .button:hover,
+      .map-controls .button:hover,
+      .full-map-day-btn:hover,
+      .mobile-stops-sheet__toggle:hover,
+      .mobile-stop-card:hover,
+      .offline-map-marker:hover .offline-map-marker-core {
+        transform: none !important;
+      }
+
+      .button,
+      .map-controls .button,
+      .full-map-day-btn,
+      .mobile-stops-sheet__toggle,
+      .mobile-stop-card {
+        transition: background-color .12s ease, border-color .12s ease, box-shadow .12s ease, transform .08s ease !important;
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    #full-map-day-filter.full-map-day-filter {
+      top: max(6px, env(safe-area-inset-top)) !important;
+      left: max(6px, env(safe-area-inset-left)) !important;
+      right: max(6px, env(safe-area-inset-right)) !important;
+      padding: 4px !important;
+    }
+
+    #full-map-day-filter .full-map-day-toggle {
+      min-width: 68px !important;
+      min-height: 40px !important;
+      height: 40px !important;
+    }
+
+    #full-map-day-filter .full-map-day-btn {
+      min-width: 44px !important;
+      min-height: 40px !important;
+      height: 40px !important;
+      padding-inline: 9px !important;
+    }
+
+    .map-controls {
+      right: max(6px, env(safe-area-inset-right)) !important;
+      bottom: calc(max(6px, env(safe-area-inset-bottom)) + 6px) !important;
+      gap: 7px !important;
+    }
+
+    .map-controls .button {
+      width: 44px !important;
+      min-width: 44px !important;
+      height: 44px !important;
+      min-height: 44px !important;
+    }
+
+    .map-legend {
+      left: max(6px, env(safe-area-inset-left)) !important;
+      bottom: calc(max(6px, env(safe-area-inset-bottom)) + 6px) !important;
+      max-width: min(160px, calc(100vw - 92px)) !important;
+      font-size: .58rem !important;
+    }
+
+    #mobile-stops-sheet {
+      left: max(6px, env(safe-area-inset-left)) !important;
+      right: calc(max(6px, env(safe-area-inset-right)) + 58px) !important;
+      bottom: max(6px, env(safe-area-inset-bottom)) !important;
+    }
+
+    #mobile-stops-sheet .mobile-stops-sheet__toggle {
+      min-height: 46px !important;
+    }
+
+    #mobile-stops-sheet .mobile-stops-sheet__panel {
+      max-height: min(46dvh, 330px) !important;
+    }
+
+    #map-preview {
+      left: max(6px, env(safe-area-inset-left)) !important;
+      right: max(6px, env(safe-area-inset-right)) !important;
+      bottom: calc(max(6px, env(safe-area-inset-bottom)) + 70px) !important;
+      max-height: min(30dvh, 250px) !important;
+    }
+
+    #map-route-card {
+      left: max(6px, env(safe-area-inset-left)) !important;
+      right: max(6px, env(safe-area-inset-right)) !important;
+      top: calc(max(6px, env(safe-area-inset-top)) + 54px) !important;
+    }
+
+    .maplibregl-popup-content {
+      width: min(300px, calc(100vw - 20px)) !important;
+      max-width: min(300px, calc(100vw - 20px)) !important;
+    }
+  }
+
+  @media (max-width: 768px) and (orientation: landscape) and (max-height: 520px) {
+    #full-map-day-filter .full-map-day-toggle,
+    #full-map-day-filter .full-map-day-btn {
+      min-height: 34px !important;
+      height: 34px !important;
+    }
+
+    #full-map-day-filter .full-map-day-toggle {
+      min-width: 66px !important;
+    }
+
+    #full-map-day-filter .full-map-day-btn {
+      min-width: 40px !important;
+    }
+
+    .map-controls .button {
+      width: 42px !important;
+      min-width: 42px !important;
+      height: 42px !important;
+      min-height: 42px !important;
+    }
+
+    .map-controls {
+      gap: 5px !important;
+      bottom: calc(max(4px, env(safe-area-inset-bottom)) + 4px) !important;
+    }
+
+    .map-legend {
+      display: none !important;
+    }
+
+    #map-route-card {
+      top: calc(max(4px, env(safe-area-inset-top)) + 44px) !important;
+      max-height: 30dvh !important;
+    }
+
+    #map-preview {
+      bottom: calc(max(4px, env(safe-area-inset-bottom)) + 56px) !important;
+      max-height: 34dvh !important;
+    }
+
+    #mobile-stops-sheet .mobile-stops-sheet__panel {
+      max-height: min(42dvh, 220px) !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .full-map-day-filter,
+    .full-map-day-body,
+    .full-map-day-btn,
+    .map-preview,
+    .preview-card,
+    .mobile-stops-sheet__toggle,
+    .mobile-stop-card {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<script id="mobile-responsive-final-patch-script">
+(function () {
+  "use strict";
+
+  var mobilePatchQuery = window.matchMedia("(max-width: 768px)");
+  var mobilePatchResizeTimer = 0;
+
+  function mobilePatchIsActive() {
+    return !!mobilePatchQuery.matches;
+  }
+
+  function mobilePatchResizeMap() {
+    if (!mobilePatchIsActive()) return;
+    requestAnimationFrame(function () {
+      try {
+        if (typeof mlMap !== "undefined" && mlMap && typeof mlMap.resize === "function") {
+          mlMap.resize();
+        }
+      } catch (error) {
+        console.debug("[Mobile Final Patch] Map resize skipped:", error);
+      }
+    });
+  }
+
+  function mobilePatchSyncViewport() {
+    if (!mobilePatchIsActive()) return;
+
+    var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    var viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+
+    if (Number.isFinite(viewportHeight) && viewportHeight > 0) {
+      document.documentElement.style.setProperty("--mobile-app-height", Math.round(viewportHeight) + "px");
+    }
+
+    document.documentElement.style.setProperty("--mobile-app-width", Math.max(320, Math.round(viewportWidth || window.innerWidth)) + "px");
+
+    window.clearTimeout(mobilePatchResizeTimer);
+    mobilePatchResizeTimer = window.setTimeout(function () {
+      mobilePatchResizeMap();
+
+      if (typeof renderMobileStopsSheet === "function") {
+        renderMobileStopsSheet();
+      }
+    }, 70);
+  }
+
+  function mobilePatchAfterDayOrMarker(event) {
+    if (!mobilePatchIsActive() || !event || !event.target || !event.target.closest) return;
+
+    var control = event.target.closest(
+      '[data-action="map-select-day"],' +
+      '[data-action="map-marker"],' +
+      '[data-action="map-fit"],' +
+      '[data-action="map-reset"],' +
+      '[data-action="map-fullscreen"],' +
+      '.maplibregl-popup-close-button'
+    );
+
+    if (!control) return;
+
+    requestAnimationFrame(function () {
+      mobilePatchResizeMap();
+
+      if (typeof renderMobileStopsSheet === "function") {
+        renderMobileStopsSheet();
+      }
+    });
+  }
+
+  document.addEventListener("click", mobilePatchAfterDayOrMarker, true);
+
+  window.addEventListener("resize", mobilePatchSyncViewport, { passive: true });
+  window.addEventListener("orientationchange", function () {
+    window.setTimeout(mobilePatchSyncViewport, 90);
+  }, { passive: true });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", mobilePatchSyncViewport, { passive: true });
+  }
+
+  if (mobilePatchQuery.addEventListener) {
+    mobilePatchQuery.addEventListener("change", mobilePatchSyncViewport);
+  } else if (mobilePatchQuery.addListener) {
+    mobilePatchQuery.addListener(mobilePatchSyncViewport);
+  }
+
+  window.addEventListener("pageshow", mobilePatchSyncViewport, { passive: true });
+
+  mobilePatchSyncViewport();
+})();
+</script>
+
 </body>
 </html>
