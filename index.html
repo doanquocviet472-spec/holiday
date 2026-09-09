@@ -1314,9 +1314,13 @@ body.dark .offline-map-marker-label{background:rgba(20,31,39,.92)!important}
                 <div class="gps-form">
                   <label>Owner<input id="gps-gh-owner" autocomplete="off" placeholder="your-github-name"></label>
                   <label>Repository<input id="gps-gh-repo" autocomplete="off" placeholder="travel-planner"></label>
+                  <label>Track day<select id="gps-track-day"><option value="1">D1</option><option value="2">D2</option><option value="3">D3</option><option value="4">D4</option><option value="5">D5</option><option value="6">D6</option></select></label>
                   <label>File path<input id="gps-gh-path" autocomplete="off" value="tracks"></label>
                   <label>Personal access token<input id="gps-gh-token" type="password" autocomplete="off" placeholder="github_pat_…"></label>
-                  <button class="button" type="button" data-action="gps-save-settings">Save settings locally</button>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+                    <button class="button" type="button" data-action="gps-save-settings">Save settings</button>
+                    <button class="button soft" type="button" data-action="gps-test-github">Test GitHub</button>
+                  </div>
                 </div>
                 <div class="gps-note">The token stays in this browser session. Saving a track uses the GitHub Contents API directly. No Python, database, Google Sheets, or separate server is used.</div>
               </details>
@@ -6761,6 +6765,10 @@ fileName: t.attachmentFileName
   .gps-accuracy-warning { color:#b45309; }
   body.dark .gps-accuracy-warning { color:#fbbf24; }
   .gps-track-node { width:18px; height:18px; border-radius:50%; background:#ef5a7d; border:3px solid #fff; box-shadow:0 0 0 2px rgba(239,90,125,.24),0 4px 12px rgba(25,35,50,.28); }
+  .gps-live-marker-wrap { position:relative; width:30px; height:30px; pointer-events:none; }
+  .gps-live-marker { position:absolute; left:6px; top:6px; width:18px; height:18px; border-radius:50%; background:#ef5a7d; border:3px solid #fff; box-shadow:0 0 0 3px rgba(239,90,125,.24),0 3px 14px rgba(25,35,50,.35); }
+  .gps-live-marker::after { content:""; position:absolute; inset:-7px; border-radius:50%; border:2px solid rgba(239,90,125,.38); animation:gpsPulse 1.7s ease-out infinite; }
+  @keyframes gpsPulse { 0%{transform:scale(.55);opacity:.95} 70%{transform:scale(1.15);opacity:.08} 100%{transform:scale(1.22);opacity:0} }
   @media (max-width: 640px) {
     .gps-track-launch { width:46px; min-width:46px; height:46px; border-radius:13px; }
     .gps-tracker-panel { top:max(126px, calc(env(safe-area-inset-top) + 118px)); right:max(8px, calc(env(safe-area-inset-right) + 8px)); width:min(350px, calc(100vw - 16px)); }
@@ -6795,18 +6803,32 @@ fileName: t.attachmentFileName
     pauseStartedAt: null,
     lastAcceptedAt: 0,
     marker: null,
+    accuracyCircle: null,
     panelOpen: false,
-    saving: false
+    saving: false,
+    lastSavedAt: 0,
+    lastSavedCount: 0,
+    autoSaveInFlight: false,
+    autoSaveTimer: null,
+    autoFollow: true,
+    currentDay: 1
   };
 
   function el(id){ return document.getElementById(id); }
   function toast(msg){ try{ if(typeof showToast === "function") showToast(msg); else console.log(msg); }catch(e){ console.log(msg); } }
   function currentDay(){
+    if(Number.isFinite(Number(gps.currentDay)) && Number(gps.currentDay)>=1) return Number(gps.currentDay);
     try{
       const d = state && state.mapDay;
       if(d !== undefined && d !== null && d !== "all" && Number.isFinite(Number(d))) return Number(d);
+      const selected = state && state.selectedDay;
+      if(selected !== undefined && selected !== null && selected !== "all" && Number.isFinite(Number(selected))) return Number(selected);
     }catch(e){}
     return 1;
+  }
+  function syncTrackDayFromInputs(){
+    const v=Number(el("gps-track-day")?.value);
+    if(Number.isFinite(v) && v>=1) gps.currentDay=v;
   }
   function selectedTrackPath(){
     const cfg = getConfig();
@@ -6842,6 +6864,7 @@ fileName: t.attachmentFileName
     if(el("gps-gh-owner")) el("gps-gh-owner").value=cfg.owner;
     if(el("gps-gh-repo")) el("gps-gh-repo").value=cfg.repo;
     if(el("gps-gh-path")) el("gps-gh-path").value=cfg.path;
+    if(el("gps-track-day")) el("gps-track-day").value=String(currentDay());
     if(el("gps-gh-token")) el("gps-gh-token").value="";
   }
   function setStatus(message,error){
@@ -6896,6 +6919,37 @@ fileName: t.attachmentFileName
     if(!mlMap.getLayer(GPS_POINT_LAYER)) mlMap.addLayer({id:GPS_POINT_LAYER,type:"circle",source:GPS_POINT_SOURCE,paint:{"circle-radius":6,"circle-color":"#ef5a7d","circle-stroke-width":3,"circle-stroke-color":"#ffffff","circle-opacity":0.98}});
     return true;
   }
+  function ensureLiveMarker(){
+    if(typeof maplibregl === "undefined" || typeof mlMap === "undefined" || !mlMap || !mapReady) return null;
+    if(gps.marker) return gps.marker;
+    try{
+      const node=document.createElement("div");
+      node.className="gps-live-marker-wrap";
+      node.innerHTML='<div class="gps-live-marker" aria-hidden="true"></div>';
+      gps.marker=new maplibregl.Marker({element:node,anchor:"center"}).setLngLat([0,0]).addTo(mlMap);
+      return gps.marker;
+    }catch(e){
+      console.warn("[GPS Tracker] Could not create live marker",e);
+      gps.marker=null;
+      return null;
+    }
+  }
+  function updateLiveMarker(point){
+    if(!point) return;
+    const marker=ensureLiveMarker();
+    if(marker) {
+      try{ marker.setLngLat([point.lng,point.lat]); marker.getElement().style.display="block"; }catch(e){}
+    }
+    if(gps.autoFollow && typeof mlMap !== "undefined" && mlMap && mapReady){
+      try{
+        const z=Number(mlMap.getZoom()||14);
+        mlMap.easeTo({center:[point.lng,point.lat],zoom:Math.max(z,15),duration:450,essential:true});
+      }catch(e){}
+    }
+  }
+  function hideLiveMarker(){
+    if(gps.marker){ try{gps.marker.getElement().style.display="none";}catch(e){} }
+  }
   function renderTrack(){
     if(!ensureLayers()) return;
     const coords=gps.points.map(p=>[p.lng,p.lat]);
@@ -6904,6 +6958,7 @@ fileName: t.attachmentFileName
     const last=gps.points[gps.points.length-1];
     const pointSource=mlMap.getSource(GPS_POINT_SOURCE);
     if(pointSource) pointSource.setData({type:"FeatureCollection",features:last?[{type:"Feature",geometry:{type:"Point",coordinates:[last.lng,last.lat]},properties:{accuracy:last.accuracy||0}}]:[]});
+    if(last) updateLiveMarker(last); else hideLiveMarker();
   }
   function moveToLatest(zoom){
     const last=gps.points[gps.points.length-1];
@@ -6933,13 +6988,15 @@ fileName: t.attachmentFileName
     gps.points.push(point); gps.lastAcceptedAt=now;
     renderTrack(); updateUI();
     setStatus((accuracy<=20?"GPS locked":"GPS acquired")+" · "+Math.round(accuracy)+" m accuracy");
+    maybeAutoSave(false);
   }
   function startTracking(){
     if(!navigator.geolocation){ setStatus("This browser does not support GPS geolocation.",true); return; }
     if(window.isSecureContext!==true){ setStatus("GPS requires HTTPS (or localhost) in this browser.",true); toast("Open the site over HTTPS to use GPS tracking."); return; }
     if(gps.recording && !gps.paused) return;
     if(gps.paused){ gps.recording=true; gps.paused=false; gps.startedAt=Date.now(); gps.pauseStartedAt=null; setStatus("GPS tracking resumed."); updateUI(); return; }
-    gps.recording=true; gps.paused=false; gps.points=[]; gps.distanceM=0; gps.startedAt=Date.now(); gps.elapsedBeforePause=0; gps.pauseStartedAt=null; gps.lastAcceptedAt=0;
+    syncTrackDayFromInputs();
+    gps.recording=true; gps.paused=false; gps.points=[]; gps.distanceM=0; gps.startedAt=Date.now(); gps.elapsedBeforePause=0; gps.pauseStartedAt=null; gps.lastAcceptedAt=0; gps.lastSavedAt=0; gps.lastSavedCount=0;
     renderTrack(); updateUI(); setStatus("Requesting GPS permission…");
     stopWatcher();
     gps.watchId=navigator.geolocation.watchPosition(addGpsPosition,function(error){
@@ -6965,12 +7022,14 @@ fileName: t.attachmentFileName
     gps.paused=false;
     gps.startedAt=null;
     gps.pauseStartedAt=null;
-    setStatus(gps.points.length ? "Tracking stopped. Route is ready to save." : "GPS stopped.");
+    setStatus(gps.points.length ? "Tracking stopped. Final route sync…" : "GPS stopped.");
     updateUI();
+    maybeAutoSave(true);
   }
   function resetTracking(){
     stopWatcher();
-    gps.recording=false; gps.paused=false; gps.points=[]; gps.distanceM=0; gps.startedAt=null; gps.elapsedBeforePause=0; gps.pauseStartedAt=null; gps.lastAcceptedAt=0;
+    gps.recording=false; gps.paused=false; gps.points=[]; gps.distanceM=0; gps.startedAt=null; gps.elapsedBeforePause=0; gps.pauseStartedAt=null; gps.lastAcceptedAt=0; gps.lastSavedAt=0; gps.lastSavedCount=0;
+    hideLiveMarker();
     renderTrack(); updateUI(); setStatus("GPS is idle.");
   }
   function trackText(day){
@@ -7007,30 +7066,86 @@ fileName: t.attachmentFileName
     if(!res.ok){ const err=new Error((data&&data.message)||("GitHub HTTP "+res.status)); err.status=res.status; throw err; }
     return data;
   }
-  async function saveToGithub(){
+  function maybeAutoSave(force){
+    if(!gps.points.length || gps.autoSaveInFlight) return;
+    const cfg=getConfig();
+    if(!cfg.owner || !cfg.repo || !cfg.token) return;
+    const now=Date.now();
+    const enoughPoints=(gps.points.length-gps.lastSavedCount)>=8;
+    const enoughTime=(now-(gps.lastSavedAt||0))>=30000;
+    if(force || (enoughPoints && enoughTime)){
+      gps.autoSaveInFlight=true;
+      saveToGithub({auto:true}).finally(function(){ gps.autoSaveInFlight=false; });
+    }
+  }
+
+  async function saveToGithub(options){
+    options=options||{};
     if(gps.saving) return;
-    if(!gps.points.length){ toast("No GPS points to save yet."); return; }
+    if(!gps.points.length){ if(!options.auto) toast("No GPS points to save yet."); return; }
     const cfg=setConfigFromInputs();
-    if(!cfg.owner||!cfg.repo||!cfg.token){ openPanel(); setStatus("Enter GitHub owner, repository, and token first.",true); toast("GitHub settings are incomplete."); return; }
-    gps.saving=true; updateUI(); setStatus("Saving route to GitHub…");
+    if(!cfg.owner||!cfg.repo||!cfg.token){
+      if(!options.auto){ openPanel(); setStatus("Enter GitHub owner, repository, and token first.",true); toast("GitHub settings are incomplete."); }
+      return;
+    }
+    gps.saving=true; updateUI();
+    if(!options.auto) setStatus("Saving route to GitHub…");
     const day=currentDay(); const path=selectedTrackPath();
     const url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo)+"/contents/"+path.split("/").map(encodeURIComponent).join("/");
     try{
-      let existing="",sha=null;
-      try{ const found=await githubRequest(url,{method:"GET"}); sha=found.sha||null; existing=found.content?base64ToUtf8(found.content):""; }catch(e){ if(e.status!==404) throw e; }
-      const content=existing ? existing.replace(/\s+$/g,"")+"\n"+trackText(day) : trackText(day);
-      const body={message:"Update GPS track D"+day,content:bytesToBase64(content)};
+      let sha=null;
+      try{
+        const found=await githubRequest(url,{method:"GET"});
+        sha=found.sha||null;
+      }catch(e){ if(e.status!==404) throw e; }
+      // Replace the file with the latest complete snapshot. This avoids duplicate GPS points
+      // when automatic saves happen repeatedly.
+      const content=trackText(day);
+      const body={message:(options.auto?"Auto-save GPS track D":"Save GPS track D")+day,content:bytesToBase64(content)};
       if(sha) body.sha=sha;
-      const result=await githubRequest(url,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-      setStatus("Saved to GitHub: "+path);
-      toast("GPS route saved to GitHub ✅");
-      try{ localStorage.setItem("travel-os-last-github-track",JSON.stringify({path:path,commit:result.commit&&result.commit.sha||"",savedAt:new Date().toISOString()})); }catch(e){}
+      let result;
+      try{
+        result=await githubRequest(url,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+      }catch(e){
+        // A 409 can happen if another browser/tab updated the same file. Re-read SHA once and retry.
+        if(e.status!==409) throw e;
+        const latest=await githubRequest(url,{method:"GET"});
+        body.sha=latest.sha;
+        result=await githubRequest(url,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+      }
+      gps.lastSavedAt=Date.now();
+      gps.lastSavedCount=gps.points.length;
+      const savedMessage="Saved to GitHub: "+path;
+      setStatus(savedMessage+(options.auto?" · auto-sync":""));
+      if(!options.auto) toast("GPS route saved to GitHub ✅");
+      try{ localStorage.setItem("travel-os-last-github-track",JSON.stringify({path:path,commit:result.commit&&result.commit.sha||"",savedAt:new Date().toISOString(),points:gps.points.length})); }catch(e){}
     }catch(error){
       console.error("[GPS Tracker] GitHub save failed",error);
       setStatus("GitHub save failed: "+String(error.message||error),true);
-      toast("Could not save the route to GitHub.");
+      if(!options.auto) toast("Could not save the route to GitHub.");
     }finally{ gps.saving=false; updateUI(); }
   }
+  async function testGithub(){
+    const cfg=setConfigFromInputs();
+    if(!cfg.owner||!cfg.repo||!cfg.token){ setStatus("Enter owner, repository and token first.",true); toast("GitHub settings are incomplete."); return; }
+    setStatus("Testing GitHub connection…");
+    const url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo);
+    try{
+      const repo=await githubRequest(url,{method:"GET"});
+      const perms=repo.permissions||{};
+      if(perms.push===true){ setStatus("GitHub OK · write access confirmed ✅"); toast("GitHub connection works ✅"); }
+      else { setStatus("GitHub connected, but write permission is not confirmed.",true); toast("Token may be missing Contents: write."); }
+    }catch(error){
+      console.error("[GPS Tracker] GitHub test failed",error);
+      let msg=String(error.message||error);
+      if(error.status===401) msg="401 Unauthorized: token is invalid/revoked.";
+      else if(error.status===403) msg="403 Forbidden: token has no permission to write this repo.";
+      else if(error.status===404) msg="404 Not Found: owner/repository is wrong or token cannot access it.";
+      setStatus("GitHub test failed: "+msg,true);
+      toast(msg);
+    }
+  }
+
   function init(){
     hydrateInputs(); updateUI();
     document.addEventListener("click",function(event){
@@ -7044,9 +7159,12 @@ fileName: t.attachmentFileName
       if(action==="gps-save"){ event.preventDefault(); saveToGithub(); return; }
       if(action==="gps-locate"){ event.preventDefault(); if(!gps.points.length){setStatus("Start tracking first so the map has a live GPS point.",true);}else moveToLatest(16); return; }
       if(action==="gps-clear"){ event.preventDefault(); if(gps.recording){toast("Pause or stop tracking before resetting.");return;} resetTracking(); return; }
-      if(action==="gps-save-settings"){ event.preventDefault(); setConfigFromInputs(); setStatus("GitHub settings saved locally."); toast("GitHub settings saved on this device."); return; }
+      if(action==="gps-save-settings"){ event.preventDefault(); setConfigFromInputs(); syncTrackDayFromInputs(); setStatus("GitHub settings saved locally."); toast("GitHub settings saved on this device."); return; }
+      if(action==="gps-test-github"){ event.preventDefault(); syncTrackDayFromInputs(); testGithub(); return; }
     },true);
-    setInterval(function(){ if(gps.recording) updateUI(); },1000);
+    gps.autoSaveTimer=setInterval(function(){
+      if(gps.recording && !gps.paused){ updateUI(); maybeAutoSave(false); }
+    },10000);
     window.addEventListener("beforeunload",function(){ if(gps.watchId!==null) stopWatcher(); });
     const observer=new MutationObserver(function(){ if(typeof mlMap!=="undefined"&&mlMap&&typeof mapReady!=="undefined"&&mapReady) { try{ensureLayers();renderTrack();}catch(e){} } });
     const stage=el("map-stage"); if(stage) observer.observe(stage,{childList:true,subtree:true});
